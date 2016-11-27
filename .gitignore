@@ -170,6 +170,8 @@ ClientBin/
 ~$*
 *~
 *.dbmdl
+*.db
+*.opendb
 *.dbproj.schemaview
 *.pfx
 *.publishsettings
