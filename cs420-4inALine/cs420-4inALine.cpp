@@ -11,16 +11,18 @@ using namespace std;
 
 void initializeBoard(char board[][GRID_SIZE]);
 void printBoard(char board[][GRID_SIZE]);
-void makeMove(char board[][GRID_SIZE], char player, string move);
+bool makeMove(char board[][GRID_SIZE], char player, string move);
 
 int main()
 {
 	char board[GRID_SIZE][GRID_SIZE];
 	initializeBoard(board);
 	printBoard(board);
-	makeMove(board, X, "A5");
+	makeMove(board, X, "a5");
 	printBoard(board);
-	makeMove(board, O, "D6");
+	makeMove(board, O, "d6");
+	printBoard(board);
+	cout<<(makeMove(board, O, "c20")== 0 ? "invalid move" : "valid move")<<endl;
 	printBoard(board);
 
 	return 0;
@@ -45,7 +47,13 @@ void printBoard(char board[][GRID_SIZE])
 		cout<<"\n";
 	}
 }
-void makeMove(char board[][GRID_SIZE], char player, string move)
+bool makeMove(char board[][GRID_SIZE], char player, string move)
 {
-	board[toupper(move[0]) - 65][move[1]-'0' - 1] = player;
+	if(toupper(move[0])-65 < 0 || toupper(move[0])-65 > 7 || move[1] - '0' - 1 < 0 || move[1] - '0' - 1 > 7 || move.size() > 2)
+		return false;
+	if(board[toupper(move[0]) - 65][move[1]- '0' - 1] != '_')
+		return false;
+	else
+		board[toupper(move[0]) - 65][move[1]- '0' - 1] = player;
+	return true;
 }
