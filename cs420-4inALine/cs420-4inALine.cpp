@@ -13,7 +13,7 @@ void initializeBoard(char board[][GRID_SIZE]);
 void printBoard(char board[][GRID_SIZE]);
 bool makeMove(char board[][GRID_SIZE], char player, string move);
 int checkForWinner(char board[][GRID_SIZE]);
-
+void getMove(char board[][GRID_SIZE]);
 
 int main()
 {
@@ -25,9 +25,7 @@ int main()
 	makeMove(board, O, "a6");
 	makeMove(board, O, "b6");
 	makeMove(board, O, "c6");
-	makeMove(board, O, "d6");
-	makeMove(board, X, "a7");
-	makeMove(board, X, "a8");
+	getMove(board);
 	printBoard(board);
 	if(checkForWinner(board) != 0)
 		cout<<"we have a winner!\n";
@@ -65,6 +63,17 @@ bool makeMove(char board[][GRID_SIZE], char player, string move)
 	else
 		board[toupper(move[0]) - 65][move[1]- '0' - 1] = player;
 	return true;
+}
+void getMove(char board[][GRID_SIZE])
+{
+	string move;
+	cout<<"Choose your next move: ";
+	cin>>move;
+	while(!makeMove(board, O, move))
+	{
+		cout<<"Invalid move.\nChoose your next move: ";
+		cin>>move;
+	}
 }
 int checkForWinner(char board[][GRID_SIZE])
 {
