@@ -3,17 +3,37 @@
 #include <iostream>
 #include <iomanip>
 #include <ctype.h>
+#include <string>
 #define GRID_SIZE 8
 #define X 'X'
 #define O 'O'
 
 using namespace std;
 
+struct moveStats {
+	int xAmount = 0;
+	int oAmount = 0;
+	int empties = 0;
+
+	void increment(char charAmountToIncrement){
+		if (charAmountToIncrement == 'X')xAmount++;
+		else if (charAmountToIncrement == 'O')oAmount++;
+		else if (charAmountToIncrement == '_')empties++;
+	}
+
+	int getCharAmount(char charAmountToGet) {
+		if (charAmountToGet == 'X')return xAmount;
+		else if (charAmountToGet == 'O')return oAmount;
+		else if (charAmountToGet == '_')return empties;
+	}
+};
+
 void initializeBoard(char board[][GRID_SIZE]);
 void printBoard(char board[][GRID_SIZE]);
 bool makeMove(char board[][GRID_SIZE], char player, string move);
 int checkForWinner(char board[][GRID_SIZE]);
 void getMove(char board[][GRID_SIZE]);
+moveStats getMoveStats(char board[][GRID_SIZE], string move);
 
 int main()
 {
@@ -25,13 +45,14 @@ int main()
 	makeMove(board, O, "a6");
 	makeMove(board, O, "b6");
 	makeMove(board, O, "c6");
+	printBoard(board);
+	getMoveStats(board, "a6");
 	getMove(board);
 	printBoard(board);
 	if(checkForWinner(board) != 0)
 		cout<<"we have a winner!\n";
 	else
 		cout<<"no winner\n";
-
 	return 0;
 }
 void initializeBoard(char board[][GRID_SIZE])
@@ -75,6 +96,65 @@ void getMove(char board[][GRID_SIZE])
 		cin>>move;
 	}
 }
+
+
+//currently, this gets the total amount of repeated o,x, or empties that are adjacent to the given move.
+//It will likely have to be modified once a proper evaluation function is discovered.
+//I'm not sure if it's important that we keep information on the direction of each repeat. If so, that can probably
+//be easily accomplished via an array in the struct.
+moveStats getMoveStats(char board[][GRID_SIZE], string move) {
+	int i = 1;
+	int x = toupper(move[0]) - 65;
+	int y = move[1] - '0' -1;
+	char repeatChar;
+	moveStats stats;
+
+	if (x-1 > 0) {
+		repeatChar = board[x-i][y];
+
+		//Checking upward for repeats
+		while (board[x-i][y] == repeatChar && x - i >= 0) {
+			stats.increment(repeatChar);
+			i++;
+		}
+	}
+	if (y+1 < GRID_SIZE) {
+		i = 1;
+		repeatChar = board[x][y+1];
+
+		//Checking right for repeats
+		while (board[x][y+i] == repeatChar && y + i < GRID_SIZE) {
+			stats.increment(repeatChar);
+			i++;
+		}
+	}
+	if (x + 1 < GRID_SIZE) {
+		i = 1;
+		repeatChar = board[x+1][y];
+
+		//Checking down for repeats
+		while (board[x+i][y] == repeatChar && x + i < GRID_SIZE) {
+			stats.increment(repeatChar);
+			i++;
+		}
+	}
+	if (y - 1 > 0) {
+		i = 1;
+		repeatChar = board[x][y-1];
+
+		//Checking left for repeats
+		while (board[x][y-i] == repeatChar && y-i > 0) {
+			stats.increment(repeatChar);
+			i++;
+		}
+	}
+
+	cout << "There are " << stats.xAmount << " " << " adjacent repeat Xs, " << stats.oAmount << 
+		" adjacent repeat Os, and " << stats.empties << " adjacent repeat emtpies at " << move << ".";
+
+	return stats;
+}
+
 int checkForWinner(char board[][GRID_SIZE])
 {
 	int xCounter = 0, oCounter = 0;
