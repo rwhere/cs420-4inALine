@@ -85,8 +85,6 @@ int main()
 	printBoard(board);
 	getMoveStats(board, "a6");
 
-	cout << convertXYValuesToMoveString(0, 5);
-
 	getMove(board);
 	printBoard(board);
 
@@ -259,6 +257,7 @@ int checkForWinner(char board[][GRID_SIZE])
 	return 0;
 }
 
+//Initializes the AI.
 void solverAI(){
 	TreeNode root;
 
@@ -278,6 +277,8 @@ string findNextMove(char board[][GRID_SIZE], string move) {
 			}
 		}
 	}
+
+	return "-1";
 }
 
 
@@ -291,6 +292,8 @@ int convertStringToMoveValueY(string move) {
 	return move[1] - '0' - 1;
 }
 
+
+//convert two coordinates into a move string. Returns a capital string like A6, instead of a6.
 string convertXYValuesToMoveString(int x, int y) {
 	char xChar = x + 65;
 	char yChar = y + '0' + 1;
