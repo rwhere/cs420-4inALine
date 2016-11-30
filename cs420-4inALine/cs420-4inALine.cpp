@@ -6,15 +6,20 @@
 #include <string>
 #include <vector>
 #define GRID_SIZE 8
-#define X 'X'
-#define O 'O'
 
 using namespace std;
 
 struct moveStats {
-	int xAmount = 0;
-	int oAmount = 0;
-	int empties = 0;
+	int xAmount;
+	int oAmount;
+	int empties;
+
+	moveStats()
+	{
+		xAmount = 0;
+		oAmount = 0;
+		empties = 0;
+	}
 
 	void increment(char charAmountToIncrement){
 		if (charAmountToIncrement == 'X')xAmount++;
@@ -26,40 +31,48 @@ struct moveStats {
 		if (charAmountToGet == 'X')return xAmount;
 		else if (charAmountToGet == 'O')return oAmount;
 		else if (charAmountToGet == '_')return empties;
+		return -1; //something went wrong
 	}
 };
 
 void initializeBoard();
 void printBoard();
-bool makeMove(char player, string move);
+bool makeMoveHuman(string move);
 int checkForWinner();
 void getMove();
 moveStats getMoveStats(string move);
 int convertStringToMoveValueX(string move);
 int convertStringToMoveValueY(string move);
 string convertXYValuesToMoveString(int x, int y);
+int min(int depth);
+int max(int depth);
+void checkGameOver();
+void makeMove();
 
-char board[GRID_SIZE][GRID_SIZE];
+char board[GRID_SIZE][GRID_SIZE], maxdepth = 64;
 
 int main()
 {
+	char c, d;
 	initializeBoard();
+	//create some phony data to make branching factor smaller
+	for(int i = 0; i < GRID_SIZE-1; ++i)
+	{
+		c = i%2==0 ? 'X' : 'O';
+		d = i%2==0 ? 'O' : 'X';
+		for(int j = 0; j < GRID_SIZE; ++j)
+			board[i][j] = j%2==0 ? c : d;
+	}
 	printBoard();
-	makeMove(X, "a4");
-	makeMove(X, "a5");
-	makeMove(O, "a6");
-	makeMove(O, "b6");
-	makeMove(O, "c6");
-	printBoard();
-	getMoveStats("a6");
+	while(1)
+	{
+		getMove();
+		checkGameOver();
+		makeMove();
+		checkGameOver();
+	}
+	
 
-	getMove();
-	printBoard();
-
-	if(checkForWinner() != 0)
-		cout<<"we have a winner!\n";
-	else
-		cout<<"no winner\n";
 	return 0;
 }
 
@@ -85,14 +98,14 @@ void printBoard()
 	}
 }
 
-bool makeMove(char player, string move)
+bool makeMoveHuman(string move)
 {
 	if(toupper(move[0])-65 < 0 || toupper(move[0])-65 > 7 || move[1] - '0' - 1 < 0 || move[1] - '0' - 1 > 7 || move.size() > 2)
 		return false;
 	if(board[toupper(move[0]) - 65][move[1]- '0' - 1] != '_')
 		return false;
 	else
-		board[toupper(move[0]) - 65][move[1]- '0' - 1] = player;
+		board[toupper(move[0]) - 65][move[1]- '0' - 1] = 'O';
 	return true;
 }
 
@@ -101,7 +114,7 @@ void getMove()
 	string move;
 	cout<<"Choose your next move: ";
 	cin>>move;
-	while(!makeMove(O, move))
+	while(!makeMoveHuman(move))
 	{
 		cout<<"Invalid move.\nChoose your next move: ";
 		cin>>move;
@@ -191,9 +204,9 @@ int checkForWinner()
 				oCounter = 0;
 			}
 			if(oCounter==4)
-				return 1;
+				return -1000;
 			if(xCounter==4)
-				return -1;
+				return 1000;
 		}
 	}
 	//check for vertical wins
@@ -219,36 +232,99 @@ int checkForWinner()
 				oCounter = 0;
 			}
 			if(oCounter==4)
-				return 1;
+				return -1000;
 			if(xCounter==4)
-				return -1;
+				return 1000;
 		}
 	}
-	return 0;
+	//check if game is not over yet
+	for(int i = 0; i < GRID_SIZE; ++i)
+		for(int j = 0; j < GRID_SIZE; ++j)
+			if(board[i][j]=='_')
+				return 0;
+	//its a draw
+	return 1;
 }
 
-////Initializes the AI.
-//void solverAI(){
-//	int best = -20000, depth = maxdepth, score, mi, mj;
-//
-//	for (int i = 0; i < 3; i++) {
-//		for (int j = 0; j < 3; j++) {
-//			if (board[i][j] == 0) {
-//				board[i][j] = 1;	// make move on board     
-//				score = min(depth - 1);
-//				if (score > best) {
-//					mi = i;
-//					mj = j;
-//					best = score;
-//				}
-//				board[i][j] = 0; // undo move   
-//			}
-//		}
-//	}
-//	cout << "my move is " << mi << " " << mj << endl;
-//	board[mi][mj] = 1;
-//}
+void makeMove()
+{
+	int best = 0x80000000, depth = maxdepth, score, movei, movej;
+	for(int i = 0; i < GRID_SIZE; ++i)
+		for(int j = 0; j < GRID_SIZE; ++j)
+		{
+			if(board[i][j] == '_')
+			{
+				board[i][j] = 'X';
+				score = min(depth - 1);
+				if(score > best)
+				{
+					movei = i;
+					movej = j;
+					best = score;
+				}
+				board[i][j] = '_';
+			}
+		}
+	cout<<"my move is "<<movei <<" "<< movej<< endl;
+	board[movei][movej] = 'X';
+}
 
+void checkGameOver()
+{
+	printBoard();
+	int result = checkForWinner();
+	if (result == -1000) {
+		cout <<"Human wins!"<< endl;
+		exit(0);
+	}
+	if (result == 1000) {
+		cout <<"Computer wins!"<< endl;
+		exit(0);
+	}
+	if (result == 1) {
+		cout << "It's a draw!" << endl;
+		exit(0);
+	}
+}
+
+int min(int depth)
+{
+	int best = 0x7FFFFFFF, score;
+	if(checkForWinner() != 0)
+		return checkForWinner();
+	for(int i = 0; i < GRID_SIZE; ++i)
+		for(int j = 0; j < GRID_SIZE; ++j)
+		{
+			if(board[i][j] == '_')
+			{
+				board[i][j] = 'O';
+				score = max(depth - 1);
+				if(score < best)
+					best = score;
+				board[i][j] = '_';
+			}
+		}
+	return best;
+}
+int max(int depth)
+{
+	int best = 0x80000000, score;
+	if(checkForWinner() != 0)
+		return checkForWinner();
+	for(int i = 0; i < GRID_SIZE; ++i)
+		for(int j = 0; j < GRID_SIZE; ++j)
+		{
+			if(board[i][j] == '_')
+			{
+				board[i][j] = 'X';
+				score = min(depth - 1);
+				if(score > best)
+					best = score;
+				board[i][j] = '_';
+			}
+		}
+	return best;
+}
 //returns the move to be made next. Starts searching board from the provided move.
 string findNextMove(string move) {
 	int x = convertStringToMoveValueX(move);
@@ -264,7 +340,6 @@ string findNextMove(string move) {
 
 	return "-1";
 }
-
 
 //converts the move string into an x-value for row index
 int convertStringToMoveValueX(string move) {
