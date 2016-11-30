@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <ctime>
+#include <stdlib.h>
 #define GRID_SIZE 8
 
 using namespace std;
@@ -51,6 +52,8 @@ void checkGameOver();
 void makeMoveAI();
 void xOrO();
 void getMaxTime();
+void getWhoGoesFirst();
+void getAIFirstMove();
 
 char board[GRID_SIZE][GRID_SIZE];
 int maxdepth = 64, maxTime = -1;
@@ -62,14 +65,15 @@ int main()
 	char c, d;
 	initializeBoard();
 	getMaxTime();
-	//create some phony data to make branching factor smaller
+	getWhoGoesFirst();
+	/*//create some phony data to make branching factor smaller
 	for(int i = 0; i < GRID_SIZE-1; ++i)
 	{
 		c = i%2==0 ? 'X' : 'O';
 		d = i%2==0 ? 'O' : 'X';
 		for(int j = 0; j < GRID_SIZE; ++j)
 			board[i][j] = j%2==0 ? c : d;
-	}
+	}*/
 	printBoard();
 	//xOrO();
 	for (;;) {
@@ -79,6 +83,36 @@ int main()
 		checkGameOver();
 	}
 	return 0;
+}
+void getWhoGoesFirst()
+{
+	int response = -1;
+	cout<<"Enter 1 to go first, 0 to go second: ";
+	cin>>response;
+	if(response==1)
+		return;
+	else if(response==0)
+		getAIFirstMove();
+	while(!(response == 1 || response == 0))
+	{
+		cout<<"Invalid input.\n";
+		cout<<"Enter 1 to go first, 0 to go second: ";
+		cin>>response;
+		if(response==1)
+			return;
+		else if(response==0)
+			getAIFirstMove();
+	}
+}
+void getAIFirstMove()
+{
+	srand(time(0));
+	//number between 2 and 5 inclusive
+	int x = rand() % 4 + 2;
+	//number between 2 and 5 inclusive
+	int y = rand() % 4 + 2;
+	board[x][y] = 'X';
+
 }
 void getMaxTime()
 {
@@ -203,7 +237,8 @@ moveStats getMoveStats(string move) {
 	return stats;
 }
 
-int evaluate() {
+int evaluate() 
+{
 	return 0;
 }
 
@@ -317,6 +352,12 @@ void makeMoveAI()
 						best = score;
 					}
 					board[i][j] = '_';
+					if((float)(clock() - startTime)/CLOCKS_PER_SEC > maxTime)
+					{
+						cout<<"My current move is: "<<convertXYValuesToMoveString(movei, movej)<<endl<<endl;
+						board[movei][movej] = 'X';
+						return;
+					}
 				}
 			}
 	}
