@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <string>
 #include <vector>
+#include <ctime>
 #define GRID_SIZE 8
 
 using namespace std;
@@ -44,13 +45,15 @@ moveStats getMoveStats(string move);
 int convertStringToMoveValueX(string move);
 int convertStringToMoveValueY(string move);
 string convertXYValuesToMoveString(int x, int y);
-int min(int depth);
-int max(int depth);
+int min(int depth, clock_t startTime);
+int max(int depth, clock_t startTime);
 void checkGameOver();
 void makeMoveAI();
 void xOrO();
+void getMaxTime();
 
-char board[GRID_SIZE][GRID_SIZE], maxdepth = 64;
+char board[GRID_SIZE][GRID_SIZE];
+int maxdepth = 64, maxTime = -1;
 char maxChar = 'X'; //computer
 char minChar = 'O'; //human
 
@@ -58,6 +61,7 @@ int main()
 {
 	char c, d;
 	initializeBoard();
+	getMaxTime();
 	//create some phony data to make branching factor smaller
 	for(int i = 0; i < GRID_SIZE-1; ++i)
 	{
@@ -76,7 +80,17 @@ int main()
 	}
 	return 0;
 }
-
+void getMaxTime()
+{
+	cout<<"How many seconds do I have to make a move: ";
+	cin>>maxTime;
+	while(maxTime <= 0)
+	{
+		cout<<"Invalid amount of seconds.\n";
+		cout<<"How many seconds do I get to make a move: ";
+		cin>>maxTime;
+	}
+}
 void xOrO(){
 	while (maxChar != 'X' && maxChar != 'O') {
 		cout << "Is the AI 'X' , or 'O'?";
@@ -285,40 +299,48 @@ void checkGameOver() {
 //I'm leaning towards having them in here so we don't have to deal with passing the chosen coordinates around.
 void makeMoveAI()
 {
-	int best = 0x80000000, depth = maxdepth, score, movei, movej;
-	for(int i = 0; i < GRID_SIZE; ++i)
-		for(int j = 0; j < GRID_SIZE; ++j)
-		{
-			if(board[i][j] == '_')
+	clock_t startTime = clock();
+	int best = 0x80000000, depth, score, movei, movej;
+	for(int depth = 1; depth < maxdepth; ++depth)
+	{
+		for(int i = 0; i < GRID_SIZE; ++i)
+			for(int j = 0; j < GRID_SIZE; ++j)
 			{
-				board[i][j] = 'X';
-				score = min(depth - 1);
-				if(score > best)
+				if(board[i][j] == '_')
 				{
-					movei = i;
-					movej = j;
-					best = score;
+					board[i][j] = 'X';
+					score = min(depth - 1, startTime);
+					if(score > best)
+					{
+						movei = i;
+						movej = j;
+						best = score;
+					}
+					board[i][j] = '_';
 				}
-				board[i][j] = '_';
 			}
-		}
+	}
 	//cout<<"my move is "<<movei <<" "<< movej<< endl;
 	cout<<"My current move is: "<<convertXYValuesToMoveString(movei, movej)<<endl<<endl;
 	board[movei][movej] = 'X';
 }
 
-int min(int depth)
+int min(int depth, clock_t startTime)
 {
 	int best = 0x7FFFFFFF, score;
 	if(checkForWinner() != 0)
 		return checkForWinner();
+	if(depth==0)
+		return evaluate();
+	if((float)(clock() - startTime)/CLOCKS_PER_SEC > maxTime)
+		return evaluate();
 	for(int i = 0; i < GRID_SIZE; ++i)
 		for(int j = 0; j < GRID_SIZE; ++j)
 		{
 			if(board[i][j] == '_')
 			{
 				board[i][j] = 'O';
-				score = max(depth - 1);
+				score = max(depth - 1, startTime);
 				if(score < best)
 					best = score;
 				board[i][j] = '_';
@@ -326,18 +348,22 @@ int min(int depth)
 		}
 	return best;
 }
-int max(int depth)
+int max(int depth, clock_t startTime)
 {
 	int best = 0x80000000, score;
 	if(checkForWinner() != 0)
 		return checkForWinner();
+	if(depth==0)
+		return evaluate();
+	if((float)(clock() - startTime)/CLOCKS_PER_SEC > maxTime)
+		return evaluate();
 	for(int i = 0; i < GRID_SIZE; ++i)
 		for(int j = 0; j < GRID_SIZE; ++j)
 		{
 			if(board[i][j] == '_')
 			{
 				board[i][j] = 'X';
-				score = min(depth - 1);
+				score = min(depth - 1, startTime);
 				if(score > best)
 					best = score;
 				board[i][j] = '_';
