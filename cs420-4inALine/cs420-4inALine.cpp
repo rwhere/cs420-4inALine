@@ -12,27 +12,67 @@
 using namespace std;
 
 struct moveStats {
-	int xAmount;
-	int oAmount;
-	int empties;
+	char xUpAmount;
+	char xDownAmount;
+	char xLeftAmount;
+	char xRightAmount;
+
+	char oUpAmount;
+	char oDownAmount;
+	char oLeftAmount;
+	char oRightAmount;
+
+	char upEmpties;
+	char downEmpties;
+	char leftEmpties;
+	char rightEmpties;
+
+	enum direction{UP=0,DOWN=1, LEFT=2, RIGHT=3};
 
 	moveStats()
 	{
-		xAmount = 0;
-		oAmount = 0;
-		empties = 0;
+		xUpAmount = 0;
+		xDownAmount = 0;
+		xLeftAmount = 0;
+		xRightAmount = 0;
+		oUpAmount = 0;
+		oDownAmount = 0;
+		oLeftAmount = 0;
+		oRightAmount = 0;
+		upEmpties = 0;
+		downEmpties = 0;
+		leftEmpties = 0;
+		rightEmpties = 0;
 	}
 
-	void increment(char charAmountToIncrement){
-		if (charAmountToIncrement == 'X')xAmount++;
-		else if (charAmountToIncrement == 'O')oAmount++;
-		else if (charAmountToIncrement == '_')empties++;
+	void increment(char charAmountToIncrement, char direction){
+		if (charAmountToIncrement == 'X' && direction == UP)xUpAmount++;
+		else if (charAmountToIncrement == 'X' && direction == DOWN)xDownAmount++;
+		else if (charAmountToIncrement == 'X' && direction == LEFT)xLeftAmount++;
+		else if (charAmountToIncrement == 'X' && direction == RIGHT)xRightAmount++;
+		else if (charAmountToIncrement == 'O' && direction == UP)oUpAmount++;
+		else if (charAmountToIncrement == 'O' && direction == DOWN)oDownAmount++;
+		else if (charAmountToIncrement == 'O' && direction == LEFT)oLeftAmount++;
+		else if (charAmountToIncrement == 'O' && direction == RIGHT)oRightAmount++;
+		else if (charAmountToIncrement == '_' && direction == UP)upEmpties++;
+		else if (charAmountToIncrement == '_' && direction == DOWN)downEmpties++;
+		else if (charAmountToIncrement == '_' && direction == LEFT)leftEmpties++;
+		else if (charAmountToIncrement == '_' && direction == RIGHT)rightEmpties++;
 	}
 
-	int getCharAmount(char charAmountToGet) {
-		if (charAmountToGet == 'X')return xAmount;
-		else if (charAmountToGet == 'O')return oAmount;
-		else if (charAmountToGet == '_')return empties;
+	int getCharAmount(char charAmountToGet, char direction) {
+		if (charAmountToGet == 'X' && direction == UP)return xUpAmount;
+		else if (charAmountToGet == 'X' && direction == DOWN)return xDownAmount;
+		else if (charAmountToGet == 'X' && direction == LEFT)return xLeftAmount;
+		else if (charAmountToGet == 'X' && direction == RIGHT)return xRightAmount;
+		else if (charAmountToGet == 'O' && direction == UP)return oUpAmount;
+		else if (charAmountToGet == 'O' && direction == DOWN)return oDownAmount;
+		else if (charAmountToGet == 'O' && direction == LEFT)return oLeftAmount;
+		else if (charAmountToGet == 'O' && direction == RIGHT)return oRightAmount;
+		else if (charAmountToGet == '_' && direction == UP)return upEmpties;
+		else if (charAmountToGet == '_' && direction == DOWN)return downEmpties;
+		else if (charAmountToGet == '_' && direction == LEFT)return leftEmpties;
+		else if (charAmountToGet == '_' && direction == RIGHT)return rightEmpties;
 		return -1; //something went wrong
 	}
 };
@@ -68,15 +108,16 @@ int main()
 	initializeBoard();
 	getMaxTime();
 	getWhoGoesFirst();
-	/*//create some phony data to make branching factor smaller
-	for(int i = 0; i < GRID_SIZE-1; ++i)
-	{
-		c = i%2==0 ? 'X' : 'O';
-		d = i%2==0 ? 'O' : 'X';
-		for(int j = 0; j < GRID_SIZE; ++j)
-			board[i][j] = j%2==0 ? c : d;
-	}*/
+	////create some phony data to make branching factor smaller
+	//for(int i = 0; i < GRID_SIZE-1; ++i)
+	//{
+	//	c = i%2==0 ? 'X' : 'O';
+	//	d = i%2==0 ? 'O' : 'X';
+	//	for(int j = 0; j < GRID_SIZE; ++j)
+	//		board[i][j] = j%2==0 ? c : d;
+	//}
 	printBoard();
+
 	//xOrO();
 	for (;;) {
 		getMoveHuman();
@@ -198,7 +239,7 @@ moveStats getMoveStats(string move) {
 
 		//Checking upward for repeats
 		while (board[x-i][y] == repeatChar && x - i >= 0) {
-			stats.increment(repeatChar);
+			stats.increment(repeatChar, stats.UP);
 			i++;
 		}
 	}
@@ -208,7 +249,7 @@ moveStats getMoveStats(string move) {
 
 		//Checking right for repeats
 		while (board[x][y+i] == repeatChar && y + i < GRID_SIZE) {
-			stats.increment(repeatChar);
+			stats.increment(repeatChar, stats.RIGHT);
 			i++;
 		}
 	}
@@ -218,7 +259,7 @@ moveStats getMoveStats(string move) {
 
 		//Checking down for repeats
 		while (board[x+i][y] == repeatChar && x + i < GRID_SIZE) {
-			stats.increment(repeatChar);
+			stats.increment(repeatChar, stats.DOWN);
 			i++;
 		}
 	}
@@ -228,13 +269,13 @@ moveStats getMoveStats(string move) {
 
 		//Checking left for repeats
 		while (board[x][y-i] == repeatChar && y-i > 0) {
-			stats.increment(repeatChar);
+			stats.increment(repeatChar, stats.LEFT);
 			i++;
 		}
 	}
 
-	cout << "There are " << stats.xAmount << " " << " adjacent repeat Xs, " << stats.oAmount << 
-		" adjacent repeat Os, and " << stats.empties << " adjacent repeat empties at " << move << ".";
+	cout << "There are " << (int)stats.xUpAmount << " " << " adjacent repeat Xs to the top, " << (int)stats.xRightAmount << 
+		" adjacent repeat Xs to the right, and " << (int)stats.xDownAmount << " adjacent repeat Xs below at " << move << "." <<endl;
 
 	return stats;
 }
