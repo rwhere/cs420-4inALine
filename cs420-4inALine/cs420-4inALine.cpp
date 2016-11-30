@@ -39,7 +39,7 @@ void initializeBoard();
 void printBoard();
 bool makeMoveHuman(string move);
 int checkForWinner();
-void getMove();
+void getMoveHuman();
 moveStats getMoveStats(string move);
 int convertStringToMoveValueX(string move);
 int convertStringToMoveValueY(string move);
@@ -47,9 +47,12 @@ string convertXYValuesToMoveString(int x, int y);
 int min(int depth);
 int max(int depth);
 void checkGameOver();
-void makeMove();
+void makeMoveAI();
+void xOrO();
 
 char board[GRID_SIZE][GRID_SIZE], maxdepth = 64;
+char maxChar = 'X'; //computer
+char minChar = 'O'; //human
 
 int main()
 {
@@ -64,16 +67,26 @@ int main()
 			board[i][j] = j%2==0 ? c : d;
 	}
 	printBoard();
-	while(1)
-	{
-		getMove();
+	//xOrO();
+	for (;;) {
+		getMoveHuman();
 		checkGameOver();
-		makeMove();
+		makeMoveAI();
 		checkGameOver();
 	}
-	
-
 	return 0;
+}
+
+void xOrO(){
+	while (maxChar != 'X' && maxChar != 'O') {
+		cout << "Is the AI 'X' , or 'O'?";
+		cin >> maxChar;
+		if (maxChar != 'X' && maxChar != 'O') {
+			cout << "Please put a capital 'X' or 'O'.";
+		}
+	}
+	if (maxChar == 'X')minChar = 'O';
+	else minChar = 'X';
 }
 
 void initializeBoard()
@@ -96,8 +109,8 @@ void printBoard()
 			cout<<setw(2)<<board[i][j];
 		cout<<"\n";
 	}
+	cout<<"\n";
 }
-
 bool makeMoveHuman(string move)
 {
 	if(toupper(move[0])-65 < 0 || toupper(move[0])-65 > 7 || move[1] - '0' - 1 < 0 || move[1] - '0' - 1 > 7 || move.size() > 2)
@@ -108,8 +121,7 @@ bool makeMoveHuman(string move)
 		board[toupper(move[0]) - 65][move[1]- '0' - 1] = 'O';
 	return true;
 }
-
-void getMove()
+void getMoveHuman()
 {
 	string move;
 	cout<<"Choose your next move: ";
@@ -120,7 +132,6 @@ void getMove()
 		cin>>move;
 	}
 }
-
 //currently, this gets the total amount of repeated o,x, or empties that are adjacent to the given move.
 //It will likely have to be modified once a proper evaluation function is discovered.
 //I'm not sure if it's important that we keep information on the direction of each repeat. If so, that can probably
@@ -178,63 +189,69 @@ moveStats getMoveStats(string move) {
 	return stats;
 }
 
+int evaluate() {
+	return 0;
+}
+
+//Have to modify the values that this returns for computer or human wins, according to our eval function.
+//Or model the returned eval function values based on this.
 int checkForWinner()
 {
-	int xCounter = 0, oCounter = 0;
+	int maxCounter = 0, minCounter = 0;
 	//check for horizontal wins
-	for(int i = 0; i < GRID_SIZE; ++i)
+	for (int i = 0; i < GRID_SIZE; ++i)
 	{
-		xCounter = 0;
-		oCounter = 0;
-		for(int j = 0; j < GRID_SIZE; ++j)
+		maxCounter = 0;
+		minCounter = 0;
+		for (int j = 0; j < GRID_SIZE; ++j)
 		{
-			if(board[i][j]=='_')
+			if (board[i][j] == '_')
 			{
-				xCounter = 0;
-				oCounter = 0;
+				maxCounter = 0;
+				minCounter = 0;
 			}
-			else if(board[i][j]=='O')
+			else if (board[i][j] == minChar)
 			{
-				++oCounter;
-				xCounter = 0;
+				++minCounter;
+				maxCounter = 0;
 			}
-			if(board[i][j]=='X')
+			if (board[i][j] == maxChar)
 			{
-				++xCounter;
-				oCounter = 0;
+				++maxCounter;
+				minCounter = 0;
 			}
-			if(oCounter==4)
-				return -1000;
-			if(xCounter==4)
-				return 1000;
+			if (minCounter == 4)
+				return -5000;
+			if (maxCounter == 4)
+				return 5000;
 		}
 	}
 	//check for vertical wins
-	for(int i = 0; i < GRID_SIZE; ++i)
+	for (int i = 0; i < GRID_SIZE; ++i)
 	{
-		xCounter = 0;
-		oCounter = 0;
-		for(int j = 0; j < GRID_SIZE; ++j)
+		maxCounter = 0;
+		minCounter = 0;
+		for (int j = 0; j < GRID_SIZE; ++j)
 		{
-			if(board[j][i]=='_')
+			if (board[j][i] == '_')
 			{
-				xCounter = 0;
-				oCounter = 0;
+				maxCounter = 0;
+				minCounter = 0;
 			}
-			else if(board[j][i]=='O')
+			else if (board[j][i] == minChar)
 			{
-				++oCounter;
-				xCounter = 0;
+				++minCounter;
+				maxCounter = 0;
 			}
-			if(board[j][i]=='X')
+			else if(board[j][i] == maxChar)
 			{
-				++xCounter;
-				oCounter = 0;
+				++maxCounter;
+				minCounter = 0;
 			}
-			if(oCounter==4)
-				return -1000;
-			if(xCounter==4)
-				return 1000;
+			if (minCounter == 4)
+				return -5000;
+			if (maxCounter == 4)
+				return 5000;
 		}
 	}
 	//check if game is not over yet
@@ -246,7 +263,27 @@ int checkForWinner()
 	return 1;
 }
 
-void makeMove()
+void checkGameOver() {
+	printBoard();
+	int result = checkForWinner();
+	if (result == -5000) {
+		cout << "you win" << endl;
+		exit(0);
+	}
+	if (result == 5000) {
+		cout << "I win" << endl;
+		exit(0);
+	}
+	if (result == 1) {
+		cout << "draw" << endl;
+		exit(0);
+	}
+}
+
+//This will have to be adapted with Iterative Deepening and a time check.
+//Not sure those changes will go in here, or in the solverAI function that calls this one.
+//I'm leaning towards having them in here so we don't have to deal with passing the chosen coordinates around.
+void makeMoveAI()
 {
 	int best = 0x80000000, depth = maxdepth, score, movei, movej;
 	for(int i = 0; i < GRID_SIZE; ++i)
@@ -265,26 +302,9 @@ void makeMove()
 				board[i][j] = '_';
 			}
 		}
-	cout<<"my move is "<<movei <<" "<< movej<< endl;
+	//cout<<"my move is "<<movei <<" "<< movej<< endl;
+	cout<<"My current move is: "<<convertXYValuesToMoveString(movei, movej)<<endl<<endl;
 	board[movei][movej] = 'X';
-}
-
-void checkGameOver()
-{
-	printBoard();
-	int result = checkForWinner();
-	if (result == -1000) {
-		cout <<"Human wins!"<< endl;
-		exit(0);
-	}
-	if (result == 1000) {
-		cout <<"Computer wins!"<< endl;
-		exit(0);
-	}
-	if (result == 1) {
-		cout << "It's a draw!" << endl;
-		exit(0);
-	}
 }
 
 int min(int depth)
@@ -326,6 +346,7 @@ int max(int depth)
 	return best;
 }
 //returns the move to be made next. Starts searching board from the provided move.
+//This may be able to be integrated into MinMax for our benefit.
 string findNextMove(string move) {
 	int x = convertStringToMoveValueX(move);
 	int y = convertStringToMoveValueY(move);
@@ -337,7 +358,6 @@ string findNextMove(string move) {
 			}
 		}
 	}
-
 	return "-1";
 }
 
