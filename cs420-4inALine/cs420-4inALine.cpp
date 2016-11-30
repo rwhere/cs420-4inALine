@@ -56,6 +56,8 @@ char board[GRID_SIZE][GRID_SIZE];
 int maxdepth = 64, maxTime = -1;
 char maxChar = 'X'; //computer
 char minChar = 'O'; //human
+int currentMax;
+int currentMin;
 
 int main()
 {
@@ -294,13 +296,12 @@ void checkGameOver() {
 	}
 }
 
-//This will have to be adapted with Iterative Deepening and a time check.
-//Not sure those changes will go in here, or in the solverAI function that calls this one.
-//I'm leaning towards having them in here so we don't have to deal with passing the chosen coordinates around.
 void makeMoveAI()
 {
 	clock_t startTime = clock();
 	int best = 0x80000000, depth, score, movei, movej;
+	currentMin = best;		//currentMin starts as lowest number because in Min, it will be updated.
+	currentMax = 0x7FFFFFFF;	//currentMax starts as largest number because condition for update in Max.
 	for(int depth = 1; depth < maxdepth; ++depth)
 	{
 		for(int i = 0; i < GRID_SIZE; ++i)
@@ -315,6 +316,7 @@ void makeMoveAI()
 						movei = i;
 						movej = j;
 						best = score;
+						currentMax = best;
 					}
 					board[i][j] = '_';
 				}
@@ -344,6 +346,8 @@ int min(int depth, clock_t startTime)
 				if(score < best)
 					best = score;
 				board[i][j] = '_';
+				if (currentMin < score) currentMin = score;
+				else if (score < currentMin)return score;
 			}
 		}
 	return best;
@@ -367,6 +371,8 @@ int max(int depth, clock_t startTime)
 				if(score > best)
 					best = score;
 				board[i][j] = '_';
+				if (currentMax > score) currentMax = score;
+				else if (score > currentMax)return score;
 			}
 		}
 	return best;
