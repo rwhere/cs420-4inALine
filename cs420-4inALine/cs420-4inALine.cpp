@@ -29,79 +29,48 @@ struct moveStats {
 	}
 };
 
-struct TreeNode{
-	TreeNode *parent;
-	vector<TreeNode *> children;
-	char board[GRID_SIZE][GRID_SIZE];
-	int viability;
-	string move;
-
-	TreeNode() {
-
-	}
-
-	TreeNode(char copyFromBoard[GRID_SIZE][GRID_SIZE]) {
-		arrayCopy(board, copyFromBoard);
-	}
-
-	TreeNode(char copyFromBoard[GRID_SIZE][GRID_SIZE], string move, TreeNode *parent) {
-		arrayCopy(board, copyFromBoard);
-		this->move = move;
-		this->parent = parent;
-	}
-
-	TreeNode::~TreeNode();
-
-	void arrayCopy(char copyTo[GRID_SIZE][GRID_SIZE] ,char copyFrom[GRID_SIZE][GRID_SIZE]){
-		for (int i = 0; i < GRID_SIZE; i++) {
-			for (int j = 0; j < GRID_SIZE; j++) {
-				copyTo[i][j] = copyFrom[i][j];
-			}
-		}
-	}
-
-};
-
-void initializeBoard(char board[][GRID_SIZE]);
-void printBoard(char board[][GRID_SIZE]);
-bool makeMove(char board[][GRID_SIZE], char player, string move);
-int checkForWinner(char board[][GRID_SIZE]);
-void getMove(char board[][GRID_SIZE]);
-moveStats getMoveStats(char board[][GRID_SIZE], string move);
+void initializeBoard();
+void printBoard();
+bool makeMove(char player, string move);
+int checkForWinner();
+void getMove();
+moveStats getMoveStats(string move);
 int convertStringToMoveValueX(string move);
 int convertStringToMoveValueY(string move);
 string convertXYValuesToMoveString(int x, int y);
 
+char board[GRID_SIZE][GRID_SIZE];
+
 int main()
 {
-	char board[GRID_SIZE][GRID_SIZE];
-	initializeBoard(board);
-	printBoard(board);
-	makeMove(board, X, "a4");
-	makeMove(board, X, "a5");
-	makeMove(board, O, "a6");
-	makeMove(board, O, "b6");
-	makeMove(board, O, "c6");
-	printBoard(board);
-	getMoveStats(board, "a6");
+	initializeBoard();
+	printBoard();
+	makeMove(X, "a4");
+	makeMove(X, "a5");
+	makeMove(O, "a6");
+	makeMove(O, "b6");
+	makeMove(O, "c6");
+	printBoard();
+	getMoveStats("a6");
 
-	getMove(board);
-	printBoard(board);
+	getMove();
+	printBoard();
 
-	if(checkForWinner(board) != 0)
+	if(checkForWinner() != 0)
 		cout<<"we have a winner!\n";
 	else
 		cout<<"no winner\n";
 	return 0;
 }
 
-void initializeBoard(char board[][GRID_SIZE])
+void initializeBoard()
 {
 	for(int i = 0; i < GRID_SIZE; ++i)
 		for(int j = 0; j < GRID_SIZE; ++j)
 			board[i][j] = '_';
 }
-void printBoard(char board[][GRID_SIZE])
+
+void printBoard()
 {
 	cout<<" ";
 	for(int i = 1; i <= GRID_SIZE ; ++i)
@@ -115,7 +84,8 @@ void printBoard(char board[][GRID_SIZE])
 		cout<<"\n";
 	}
 }
-bool makeMove(char board[][GRID_SIZE], char player, string move)
+
+bool makeMove(char player, string move)
 {
 	if(toupper(move[0])-65 < 0 || toupper(move[0])-65 > 7 || move[1] - '0' - 1 < 0 || move[1] - '0' - 1 > 7 || move.size() > 2)
 		return false;
@@ -125,24 +95,24 @@ bool makeMove(char board[][GRID_SIZE], char player, string move)
 		board[toupper(move[0]) - 65][move[1]- '0' - 1] = player;
 	return true;
 }
-void getMove(char board[][GRID_SIZE])
+
+void getMove()
 {
 	string move;
 	cout<<"Choose your next move: ";
 	cin>>move;
-	while(!makeMove(board, O, move))
+	while(!makeMove(O, move))
 	{
 		cout<<"Invalid move.\nChoose your next move: ";
 		cin>>move;
 	}
 }
 
-
 //currently, this gets the total amount of repeated o,x, or empties that are adjacent to the given move.
 //It will likely have to be modified once a proper evaluation function is discovered.
 //I'm not sure if it's important that we keep information on the direction of each repeat. If so, that can probably
 //be easily accomplished via an array in the struct.
-moveStats getMoveStats(char board[][GRID_SIZE], string move) {
+moveStats getMoveStats(string move) {
 	int i = 1;
 	int x = convertStringToMoveValueX(move);
 	int y = convertStringToMoveValueY(move);
@@ -195,7 +165,7 @@ moveStats getMoveStats(char board[][GRID_SIZE], string move) {
 	return stats;
 }
 
-int checkForWinner(char board[][GRID_SIZE])
+int checkForWinner()
 {
 	int xCounter = 0, oCounter = 0;
 	//check for horizontal wins
@@ -257,16 +227,30 @@ int checkForWinner(char board[][GRID_SIZE])
 	return 0;
 }
 
-//Initializes the AI.
-void solverAI(){
-	TreeNode root;
-
-	
-	
-}
+////Initializes the AI.
+//void solverAI(){
+//	int best = -20000, depth = maxdepth, score, mi, mj;
+//
+//	for (int i = 0; i < 3; i++) {
+//		for (int j = 0; j < 3; j++) {
+//			if (board[i][j] == 0) {
+//				board[i][j] = 1;	// make move on board     
+//				score = min(depth - 1);
+//				if (score > best) {
+//					mi = i;
+//					mj = j;
+//					best = score;
+//				}
+//				board[i][j] = 0; // undo move   
+//			}
+//		}
+//	}
+//	cout << "my move is " << mi << " " << mj << endl;
+//	board[mi][mj] = 1;
+//}
 
 //returns the move to be made next. Starts searching board from the provided move.
-string findNextMove(char board[][GRID_SIZE], string move) {
+string findNextMove(string move) {
 	int x = convertStringToMoveValueX(move);
 	int y = convertStringToMoveValueY(move);
 
@@ -299,9 +283,4 @@ string convertXYValuesToMoveString(int x, int y) {
 	char yChar = y + '0' + 1;
 
 	return string() + xChar + yChar;
-}
-
-
-TreeNode::~TreeNode(void) {
-	children.clear();
 }
