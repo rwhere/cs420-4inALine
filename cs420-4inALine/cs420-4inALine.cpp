@@ -412,15 +412,55 @@ int evaluate(int x, int y)
 	moveStats stats = getMoveStats(x,y);
 	int viability = 0;
 
-	if (stats.oUpAmount == 2
-		|| stats.oDownAmount == 2
-		|| stats.oLeftAmount == 2
-		|| stats.oRightAmount == 2)viability += 1000;
-	if (stats.oUpAmount == 3
-		|| stats.oDownAmount == 3
-		|| stats.oLeftAmount == 3
-		|| stats.oRightAmount == 3)viability += 1500;
-	if (stats.xLeftAmount + stats.rightEmpties + 1 >= 4)viability += 50;
+	int oneOpponentVal = 200;
+	if (stats.oUpAmount == 1)viability += oneOpponentVal;
+	if (stats.oDownAmount == 1)viability += oneOpponentVal;
+	if (stats.oLeftAmount == 1)viability += oneOpponentVal;
+	if (stats.oRightAmount == 1)viability += oneOpponentVal;
+
+	int twoOpponentVal = 1000;
+	if (stats.oUpAmount == 2)viability += twoOpponentVal;
+	if (stats.oDownAmount == 2)viability += twoOpponentVal;
+	if(stats.oLeftAmount == 2)viability += twoOpponentVal;
+	if(stats.oRightAmount == 2)viability += twoOpponentVal;
+
+	int twoOpponentEmptyBreakersVal = 5250;
+	if (stats.oUpAmount == 2 && stats.upBreaker == '_')viability += twoOpponentEmptyBreakersVal;
+	if (stats.oDownAmount == 2 && stats.downBreaker == '_')viability += twoOpponentEmptyBreakersVal;
+	if (stats.oLeftAmount == 2 && stats.leftBreaker == '_')viability += twoOpponentEmptyBreakersVal;
+	if (stats.oRightAmount == 2 && stats.rightBreaker == '_')viability += twoOpponentEmptyBreakersVal;
+
+	int threeOpponentVal = 6000;
+	if (stats.oUpAmount == 3)viability += threeOpponentVal;
+	if (stats.oDownAmount == 3)viability += threeOpponentVal;
+	if (stats.oLeftAmount == 3)viability += threeOpponentVal;
+	if (stats.oRightAmount == 3)viability += threeOpponentVal;
+
+	int oneAIVal = 250;
+	if (stats.xUpAmount == 1)viability += oneAIVal;
+	if (stats.xDownAmount == 1)viability += oneAIVal;
+	if (stats.xLeftAmount == 1)viability += oneAIVal;
+	if (stats.xRightAmount == 1)viability += oneAIVal;
+
+	//less important than twoOpponentVal
+	int twoAIVal = 4000;
+	if (stats.xUpAmount == 3)viability += twoAIVal;
+	if (stats.xDownAmount == 3)viability += twoAIVal;
+	if (stats.xLeftAmount == 3)viability += twoAIVal;
+	if (stats.xRightAmount == 3)viability += twoAIVal;
+
+	//VERY IMPORTANT! YOU CAN WIN!
+	int threeAIVal = 9001;
+	if (stats.xUpAmount == 3)viability += threeAIVal;
+	if (stats.xDownAmount == 3)viability += threeAIVal;
+	if (stats.xLeftAmount == 3)viability += threeAIVal;
+	if (stats.xRightAmount == 3)viability += threeAIVal;
+
+	//Keep away from sides that will give you no possible space to win.
+	if (stats.xUpAmount + stats.downEmpties + 1 >= 4)viability += 100;
+	if (stats.xDownAmount + stats.upEmpties + 1 >= 4)viability += 100;
+	if (stats.xLeftAmount + stats.rightEmpties + 1 >= 4)viability += 100;
+	if (stats.xRightAmount + stats.leftEmpties + 1 >= 4)viability += 100;
 	
 	return viability;
 }
