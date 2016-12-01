@@ -287,10 +287,11 @@ int checkForWinner()
 		}
 	}
 	//check if game is not over yet
-	for(int i = 0; i < GRID_SIZE; ++i)
-		for(int j = 0; j < GRID_SIZE; ++j)
-			if(board[i][j]=='_')
-				return 0;
+	for (int i = 0; i < GRID_SIZE; ++i) {
+		for (int j = 0; j < GRID_SIZE; ++j) {
+			if (board[i][j] == '_')return 0;
+		}
+	}
 	//its a draw
 	return 1;
 }
@@ -344,7 +345,7 @@ void makeMoveAI()
 				}
 			}
 	}
-	//cout<<"my move is "<<movei <<" "<< movej<< endl;
+
 	cout<<"My current move is: "<<convertXYValuesToMoveString(movei, movej)<<endl<<endl;
 	board[movei][movej] = 'X';
 }
@@ -404,7 +405,20 @@ int max(int depth, clock_t startTime, int x, int y)
 int evaluate(int x, int y)
 {
 	moveStats stats = getMoveStats(x,y);
-	return 0;
+	int viability = 0;
+
+	if (stats.oUpAmount == 2
+		|| stats.oDownAmount == 2
+		|| stats.oLeftAmount == 2
+		|| stats.oRightAmount == 2)viability += 1000;
+	if (stats.oUpAmount == 3
+		|| stats.oDownAmount == 3
+		|| stats.oLeftAmount == 3
+		|| stats.oRightAmount == 3)viability += 1500;
+	if (stats.xLeftAmount + stats.rightEmpties + 1 >= 4)viability += 50;
+	
+	cout << viability;
+	return viability;
 }
 
 //currently, this gets the total amount of repeated o,x, or empties that are adjacent to the given move.
