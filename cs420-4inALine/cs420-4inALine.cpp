@@ -334,32 +334,36 @@ void makeMoveAI()
 	int alpha = 0x80000000;
 	best = alpha;
 	int beta = 0x7FFFFFFF;
-	for(int depth = 1; depth < maxdepth; ++depth)
-	{
-		for(int i = 0; i < GRID_SIZE; ++i)
-			for(int j = 0; j < GRID_SIZE; ++j)
-			{
-				if(board[i][j] == '_')
-				{
-					board[i][j] = 'X';
-					v = min(depth - 1, startTime, i, j, alpha, beta);
-					board[i][j] = '_';
-					if(v > best)
-					{
-						movei = i;
-						movej = j;
-						best = v;
-					}
-					if((float)(clock() - startTime)/CLOCKS_PER_SEC > maxTime)
-					{
-						cout<<"My current move is: "<<convertXYValuesToMoveString(movei, movej)<<endl<<endl;
-						board[movei][movej] = 'X';
-						return;
-					}
-				}
-			}
-	}
 
+	for (int depth = 1; depth < maxdepth; ++depth)
+	{
+		vector<xyPair> vect = prePrune();
+		vector<xyPair>::iterator it;
+		int i = 0;
+		for (it = vect.begin(); it < vect.end(); it++, i++) {
+			int vectX = vect[i].x;
+			int vectY = vect[i].y;
+			if (board[vectX][vectY] == '_')
+			{
+				board[vectX][vectY] = 'X';
+				v = min(depth - 1, startTime, vectX, vectY, alpha, beta);
+				board[vectX][vectY] = '_';
+				if (v > best)
+				{
+					movei = vectX;
+					movej = vectY;
+					best = v;
+				}
+				if ((float)(clock() - startTime) / CLOCKS_PER_SEC > maxTime)
+				{
+					cout << "My current move is: " << convertXYValuesToMoveString(movei, movej) << endl << endl;
+					board[movei][movej] = 'X';
+					return;
+				}
+
+			}
+		}
+	}
 	cout<<"My current move is: "<<convertXYValuesToMoveString(movei, movej)<<endl<<endl;
 	board[movei][movej] = 'X';
 }
@@ -373,21 +377,26 @@ int min(int depth, clock_t startTime, int x, int y, int alpha, int beta)
 		return eval(x,y);
 	if((float)(clock() - startTime)/CLOCKS_PER_SEC > maxTime)
 		return eval(x,y);
-	for(int i = 0; i < GRID_SIZE; ++i)
-		for(int j = 0; j < GRID_SIZE; ++j)
+
+	vector<xyPair> vect = prePrune();
+	vector<xyPair>::iterator it;
+	int i = 0;
+	for (it = vect.begin(); it < vect.end(); it++, i++) {
+		int vectX = vect[i].x;
+		int vectY = vect[i].y;
+		if(board[vectX][vectY] == '_')
 		{
-			if(board[i][j] == '_')
-			{
-				board[i][j] = 'O';
-				v = Min(v, max(depth - 1, startTime,i, j, alpha, beta));
-				board[i][j] = '_';
-				if(v <= alpha)
-					return v;
-				beta = Min(beta, v);
-			}
+			board[vectX][vectY] = 'O';
+			v = Min(v, max(depth - 1, startTime,vectX, vectY, alpha, beta));
+			board[vectX][vectY] = '_';
+			if(v <= alpha)
+				return v;
+			beta = Min(beta, v);
 		}
+	}
 	return v;
 }
+
 int max(int depth, clock_t startTime, int x, int y, int alpha, int beta)
 {
 	int v = 0x80000000;
@@ -397,19 +406,23 @@ int max(int depth, clock_t startTime, int x, int y, int alpha, int beta)
 		return eval(x,y);
 	if((float)(clock() - startTime)/CLOCKS_PER_SEC > maxTime)
 		return eval(x,y);
-	for(int i = 0; i < GRID_SIZE; ++i)
-		for(int j = 0; j < GRID_SIZE; ++j)
+
+	vector<xyPair> vect = prePrune();
+	vector<xyPair>::iterator it;
+	int i = 0;
+	for (it = vect.begin(); it < vect.end(); it++, i++) {
+		int vectX = vect[i].x;
+		int vectY = vect[i].y;
+		if(board[vectX][vectY] == '_')
 		{
-			if(board[i][j] == '_')
-			{
-				board[i][j] = 'X';
-				v = Max(v, min(depth - 1, startTime,i,j,alpha,beta));
-				board[i][j] = '_';
-				if(v >= beta)
-					return v;
-				alpha = Max(alpha, v);
-			}
+			board[vectX][vectY] = 'X';
+			v = Max(v, min(depth - 1, startTime,vectX,vectY,alpha,beta));
+			board[vectX][vectY] = '_';
+			if(v >= beta)
+				return v;
+			alpha = Max(alpha, v);
 		}
+	}
 	return v;
 }
 int Max(int x, int y)
@@ -622,12 +635,6 @@ vector<xyPair> prePrune() {
 				vect.push_back(coordPair);
 			}
 		}
-	}
-
-	vector<xyPair>::iterator it;
-	int i = 0;
-	for (it = vect.begin(); it < vect.end(); it++, i++) {
-		cout << vect[i].x << " " << vect[i].y << endl;
 	}
 
 	return vect;
