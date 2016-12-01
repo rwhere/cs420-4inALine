@@ -114,14 +114,14 @@ int main()
 	initializeBoard();
 	getMaxTime();
 	getWhoGoesFirst();
-	//create some phony data to make branching factor smaller
-	for(int i = 0; i < GRID_SIZE-1; ++i)
-	{
-		c = i%2==0 ? 'X' : 'O';
-		d = i%2==0 ? 'O' : 'X';
-		for(int j = 0; j < GRID_SIZE; ++j)
-			board[i][j] = j%2==0 ? c : d;
-	}
+	////create some phony data to make branching factor smaller
+	//for(int i = 0; i < GRID_SIZE-1; ++i)
+	//{
+	//	c = i%2==0 ? 'X' : 'O';
+	//	d = i%2==0 ? 'O' : 'X';
+	//	for(int j = 0; j < GRID_SIZE; ++j)
+	//		board[i][j] = j%2==0 ? c : d;
+	//}
 	printBoard();
 
 	//xOrO();
