@@ -164,6 +164,7 @@ void getAIFirstMove()
 	//number between 2 and 5 inclusive
 	int y = rand() % 4 + 2;
 	board[x][y] = 'X';
+	cout<<"My current move is: "<<convertXYValuesToMoveString(x, y)<<endl<<endl;
 
 }
 void getMaxTime()
@@ -415,6 +416,8 @@ int Min(int x, int y)
 	return x < y ? x : y;
 }
 
+//notes: clustering is a strategy. must choose move close to opponent if you go 2nd
+//another strategy: really sticking to your opponent
 int eval(int x, int y)
 {
 	moveStats stats = getMoveStats(x,y);
@@ -475,6 +478,7 @@ int eval(int x, int y)
 	if(stats.xUpAmount + stats.xDownAmount == 1)
 		return 2000;
 
+	//DEFINITELY WORK ON THIS! ITS PICKING CRAPPY MOVES!
 	//if none of the above cases doesnt exist we want to pick a cell that is not near the edges and has spaces around it
 	//for now it'll just choose sequentially
 	return viability;
