@@ -91,8 +91,8 @@ moveStats getMoveStats(int x, int y);
 int convertStringToMoveValueX(string move);
 int convertStringToMoveValueY(string move);
 string convertXYValuesToMoveString(int x, int y);
-int min(int depth, clock_t startTime, int x, int y);
-int max(int depth, clock_t startTime, int x, int y);
+int min(int depth, clock_t startTime, int x, int y, int alpha, int beta);
+int max(int depth, clock_t startTime, int x, int y, int alpha, int beta);
 void checkGameOver();
 void makeMoveAI();
 void xOrO();
@@ -100,6 +100,8 @@ void getMaxTime();
 void getWhoGoesFirst();
 void getAIFirstMove();
 int evaluate(int x, int y);
+int Max(int, int);
+int Min(int, int);
 
 char board[GRID_SIZE][GRID_SIZE];
 int maxdepth = 64, maxTime = -1;
@@ -321,9 +323,10 @@ void checkGameOver() {
 void makeMoveAI()
 {
 	clock_t startTime = clock();
-	int best = 0x80000000, depth, score, movei, movej;
-	currentMin = best;		//currentMin starts as lowest number because in Min, it will be updated.
-	currentMax = 0x7FFFFFFF;	//currentMax starts as largest number because condition for update in Max.
+	int depth, score, movei, movej, v, best;
+	int alpha = 0x80000000;
+	best = alpha;
+	int beta = 0x7FFFFFFF;
 	for(int depth = 1; depth < maxdepth; ++depth)
 	{
 		for(int i = 0; i < GRID_SIZE; ++i)
@@ -332,15 +335,14 @@ void makeMoveAI()
 				if(board[i][j] == '_')
 				{
 					board[i][j] = 'X';
-					score = min(depth - 1, startTime, i,j);
-					if(score > best)
+					v = min(depth - 1, startTime, i, j, alpha, beta);
+					board[i][j] = '_';
+					if(v > best)
 					{
 						movei = i;
 						movej = j;
-						best = score;
-						currentMax = best;
+						best = v;
 					}
-					board[i][j] = '_';
 					if((float)(clock() - startTime)/CLOCKS_PER_SEC > maxTime)
 					{
 						cout<<"My current move is: "<<convertXYValuesToMoveString(movei, movej)<<endl<<endl;
@@ -355,9 +357,9 @@ void makeMoveAI()
 	board[movei][movej] = 'X';
 }
 
-int min(int depth, clock_t startTime, int x, int y)
+int min(int depth, clock_t startTime, int x, int y, int alpha, int beta)
 {
-	int best = 0x7FFFFFFF, score;
+	int v = 0x7FFFFFFF;
 	if(checkForWinner() != 0)
 		return checkForWinner();
 	if(depth==0)
@@ -370,19 +372,18 @@ int min(int depth, clock_t startTime, int x, int y)
 			if(board[i][j] == '_')
 			{
 				board[i][j] = 'O';
-				score = max(depth - 1, startTime,i, j);
-				if(score < best)
-					best = score;
+				v = Min(v, max(depth - 1, startTime,i, j, alpha, beta));
 				board[i][j] = '_';
-				if (currentMin < score) currentMin = score;
-				else if (score < currentMin)return currentMin;
+				if(v <= alpha)
+					return v;
+				beta = Min(beta, v);
 			}
 		}
-	return best;
+	return v;
 }
-int max(int depth, clock_t startTime, int x, int y)
+int max(int depth, clock_t startTime, int x, int y, int alpha, int beta)
 {
-	int best = 0x80000000, score;
+	int v = 0x80000000;
 	if(checkForWinner() != 0)
 		return checkForWinner();
 	if(depth==0)
@@ -395,17 +396,23 @@ int max(int depth, clock_t startTime, int x, int y)
 			if(board[i][j] == '_')
 			{
 				board[i][j] = 'X';
-				score = min(depth - 1, startTime,i,j);
-				if(score > best)
-					best = score;
+				v = Max(v, min(depth - 1, startTime,i,j,alpha,beta));
 				board[i][j] = '_';
-				if (currentMax > score) currentMax = score;
-				else if (score > currentMax)return currentMax;
+				if(v >= beta)
+					return v;
+				alpha = Max(alpha, v);
 			}
 		}
-	return best;
+	return v;
 }
-
+int Max(int x, int y)
+{
+	return x > y ? x : y;
+}
+int Min(int x, int y)
+{
+	return x < y ? x : y;
+}
 
 int evaluate(int x, int y)
 {
