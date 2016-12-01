@@ -230,13 +230,6 @@ bool makeMoveHuman(string move)
 }
 void getMoveHuman()
 {
-	vector<xyPair> vect = prePrune();
-	vector<xyPair>::iterator it;
-	int i = 0;
-	for (it = vect.begin(); it < vect.end(); it++, i++) {
-		cout << convertXYValuesToMoveString(vect[i].x, vect[i].y) << endl;
-	}
-
 	string move;
 	cout<<"Choose your next move: ";
 	cin>>move;
@@ -345,15 +338,11 @@ void makeMoveAI()
 
 	vector<xyPair> vect = prePrune();
 	vector<xyPair>::iterator it;
-	int i = 0;
-	for (it = vect.begin(); it < vect.end(); it++, i++) {
-		cout << convertXYValuesToMoveString(vect[i].x, vect[i].y) << endl;
-	}
-
+	
 	for (int depth = 1; depth < maxdepth; ++depth)
 	{
 		vect = prePrune();
-		i = 0;
+		int i = 0;
 		for (it = vect.begin(); it < vect.end(); it++, i++) {
 			int vectX = vect[i].x;
 			int vectY = vect[i].y;
@@ -478,23 +467,23 @@ int eval(int x, int y)
 		board[x][y] = '_';
 
 	//case 3: block a move that can get them in a position of having 3 in a row with 2 empty spaces on sides
-	if(stats.oLeftAmount==1 && stats.oRightAmount==1 && x - 2 >= 0 && board[x-2][y]=='_' && x + 2 <= 7 && board[x+2][y]=='_')
+	if (stats.oLeftAmount == 1 && stats.oRightAmount == 1 && y - 2 >= 0 && stats.leftBreaker == '_' && y + 2 <= 7 && stats.rightBreaker == '_')
 		return 4000;
-	if(stats.oUpAmount==1 && stats.oDownAmount==1 && y - 2 >= 0 && board[x][y-2]=='_' && y + 2 <= 7 && board[x][y+2]=='_')
+	if(stats.oUpAmount==1 && stats.oDownAmount==1 && x - 2 >= 0 && stats.upBreaker == '_' && x + 2 <= 7 && stats.downBreaker=='_')
 		return 4000;
-	if(stats.oRightAmount==2 && x + 3 <= 7 && board[x+3][y]=='_')
+	if(stats.oRightAmount==2 && y + 3 <= 7 && board[x][y+3]=='_')
 		return 4000;
-	if(stats.oLeftAmount==2 && x - 3 >= 0 && board[x-3][y]=='_')
+	if(stats.oLeftAmount==2 && y - 3 >= 0 && board[x][y-3]=='_')
 		return 4000;
-	if(stats.oUpAmount==2 && y - 3 >= 0 && board[x][y-3]=='_')
+	if(stats.oUpAmount==2 && x - 3 >= 0 && board[x-3][y]=='_')
 		return 4000;
-	if(stats.oDownAmount==2 && y + 3 <= 7 && board[x][y+3]=='_')
+	if(stats.oDownAmount==2 && x + 3 <= 7 && board[x+3][y]=='_')
 		return 4000;
 
 	//case 4: a move that will create 3 in a row WITH SPACES on both sides
-	if(stats.xLeftAmount==1 && stats.xRightAmount == 1 && x - 2 >= 0 && board[x-2][y]=='_' && x + 2 <= 7 && board[x+2][y]=='_')
+	if(stats.xLeftAmount==1 && stats.xRightAmount == 1 && y - 2 >= 0 && board[x][y-2]=='_' && y + 2 <= 7 && board[x][y+2]=='_')
 		return 3500;
-	if(stats.xUpAmount==1 && stats.xDownAmount == 1 && y - 2 >= 0 && board[x][y-2]=='_' && y + 2 <= 7 && board[x][y+2]=='_')
+	if(stats.xUpAmount==1 && stats.xDownAmount == 1 && x - 2 >= 0 && board[x-2][y]=='_' && x + 2 <= 7 && board[x+2][y]=='_')
 		return 3500;
 
 	//case 5: choose a move that moves toward creating the position we blocked the oponent from doing above
@@ -502,11 +491,11 @@ int eval(int x, int y)
 
 	//this move is easy to detect and block. thats why i have case 5 come before because it is more hopeful
 	//case 6: a move that will create 3 in a row no spaces on both sides with guarantee 4 in a row is possible via this move
-	if(stats.xLeftAmount + stats.xRightAmount == 2 && ((x - stats.xLeftAmount - 1 >= 0 && board[x-stats.xLeftAmount-1][y]=='_') || 
-													(x + stats.xRightAmount + 1 <= 7 && board[x+stats.xRightAmount+1][y]=='_')))
+	if(stats.xLeftAmount + stats.xRightAmount == 2 && ((y - stats.xLeftAmount - 1 >= 0 && board[x][y - stats.xLeftAmount-1]=='_') || 
+													(y + stats.xRightAmount + 1 <= 7 && board[x][y+stats.xRightAmount+1]=='_')))
 		return 2500;
-	if(stats.xUpAmount + stats.xDownAmount == 2 && ((y - stats.xUpAmount - 1 >= 0 && board[y-stats.xUpAmount-1][y]=='_') || 
-													(y + stats.xDownAmount <= 7 && board[y+stats.xDownAmount+1][y]=='_')))
+	if(stats.xUpAmount + stats.xDownAmount == 2 && ((x - stats.xUpAmount - 1 >= 0 && board[x-stats.xUpAmount-1][y]=='_') || 
+													(x + stats.xDownAmount +1 <= 7 && board[x+stats.xDownAmount+1][y]=='_')))
 		return 2500;
 
 	//maybe this should only be used when we go 2nd
