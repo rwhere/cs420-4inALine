@@ -170,6 +170,7 @@ void getAIFirstMove()
 	//number between 2 and 5 inclusive
 	int y = rand() % 4 + 2;
 	board[x][y] = 'X';
+	cout<<"My current move is: "<<convertXYValuesToMoveString(x, y)<<endl<<endl;
 
 }
 void getMaxTime()
@@ -447,6 +448,10 @@ int Min(int x, int y)
 	return x < y ? x : y;
 }
 
+//notes: clustering is a strategy. must choose move close to opponent if you go 2nd
+//another strategy: really sticking to your opponent
+//bug: didnt choose the right move from eval list. chose a bad one instead. pre pruning?
+//bug in detail: theres a move with 4000 points is not chosen over move with 250*(x < 7) priority
 int eval(int x, int y)
 {
 	moveStats stats = getMoveStats(x,y);
@@ -493,22 +498,28 @@ int eval(int x, int y)
 		return 3500;
 
 	//case 5: choose a move that moves toward creating the position we blocked the oponent from doing above
+	
 
 	//this move is easy to detect and block. thats why i have case 5 come before because it is more hopeful
-	//case 6: a move that will create 3 in a row no spaces on both sides
-	if(stats.xLeftAmount + stats.xRightAmount == 2)
+	//case 6: a move that will create 3 in a row no spaces on both sides with guarantee 4 in a row is possible via this move
+	if(stats.xLeftAmount + stats.xRightAmount == 2 && ((x - stats.xLeftAmount - 1 >= 0 && board[x-stats.xLeftAmount-1][y]=='_') || 
+													(x + stats.xRightAmount + 1 <= 7 && board[x+stats.xRightAmount+1][y]=='_')))
 		return 2500;
-	if(stats.xUpAmount + stats.xDownAmount == 2)
+	if(stats.xUpAmount + stats.xDownAmount == 2 && ((y - stats.xUpAmount - 1 >= 0 && board[y-stats.xUpAmount-1][y]=='_') || 
+													(y + stats.xDownAmount <= 7 && board[y+stats.xDownAmount+1][y]=='_')))
 		return 2500;
 
-	//case 7: a move that will create 2 in a row
+	//maybe this should only be used when we go 2nd
+	/*a move that will closely stay on its opponent. if it has a neighbor stick to them
+	if(stats.oUpAmount>=1 || stats.oDownAmount>=1 || stats.oRightAmount>=1 || stats.oLeftAmount>=1)
+		return 2000;*/
+
+	//case 8: a move that will create 2 in a row
 	if(stats.xLeftAmount + stats.xRightAmount == 1)
-		return 2000;
+		return 200;
 	if(stats.xUpAmount + stats.xDownAmount == 1)
-		return 2000;
+		return 200;
 
-	//if none of the above cases doesnt exist we want to pick a cell that is not near the edges and has spaces around it
-	//for now it'll just choose sequentially
 	return viability;
 }
 
