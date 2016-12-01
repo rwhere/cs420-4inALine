@@ -369,8 +369,8 @@ int min(int depth, clock_t startTime, int x, int y)
 				if(score < best)
 					best = score;
 				board[i][j] = '_';
-				//if (currentMin < score) currentMin = score;
-				//else if (score < currentMin)return score;
+				if (currentMin < score) currentMin = score;
+				else if (score < currentMin)return currentMin;
 			}
 		}
 	return best;
@@ -394,8 +394,8 @@ int max(int depth, clock_t startTime, int x, int y)
 				if(score > best)
 					best = score;
 				board[i][j] = '_';
-				//if (currentMax > score) currentMax = score;
-				//else if (score > currentMax)return score;
+				if (currentMax > score) currentMax = score;
+				else if (score > currentMax)return currentMax;
 			}
 		}
 	return best;
