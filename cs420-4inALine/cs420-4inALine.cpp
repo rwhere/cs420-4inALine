@@ -102,6 +102,7 @@ void getAIFirstMove();
 int evaluate(int x, int y);
 int Max(int, int);
 int Min(int, int);
+int eval(int x, int y);
 
 char board[GRID_SIZE][GRID_SIZE];
 int maxdepth = 64, maxTime = -1;
@@ -363,9 +364,9 @@ int min(int depth, clock_t startTime, int x, int y, int alpha, int beta)
 	if(checkForWinner() != 0)
 		return checkForWinner();
 	if(depth==0)
-		return evaluate(x,y);
+		return eval(x,y);
 	if((float)(clock() - startTime)/CLOCKS_PER_SEC > maxTime)
-		return evaluate(x,y);
+		return eval(x,y);
 	for(int i = 0; i < GRID_SIZE; ++i)
 		for(int j = 0; j < GRID_SIZE; ++j)
 		{
@@ -387,9 +388,9 @@ int max(int depth, clock_t startTime, int x, int y, int alpha, int beta)
 	if(checkForWinner() != 0)
 		return checkForWinner();
 	if(depth==0)
-		return evaluate(x,y);
+		return eval(x,y);
 	if((float)(clock() - startTime)/CLOCKS_PER_SEC > maxTime)
-		return evaluate(x,y);
+		return eval(x,y);
 	for(int i = 0; i < GRID_SIZE; ++i)
 		for(int j = 0; j < GRID_SIZE; ++j)
 		{
@@ -412,6 +413,71 @@ int Max(int x, int y)
 int Min(int x, int y)
 {
 	return x < y ? x : y;
+}
+
+int eval(int x, int y)
+{
+	moveStats stats = getMoveStats(x,y);
+	int viability = 100;
+
+	//case 1: one space away from victory ** we can speed this up by using math instead of brute force
+	board[x][y]='X';
+	if(checkForWinner()==5000)
+	{
+		board[x][y] = '_';
+		return 5000;
+	}
+	else
+		board[x][y] = '_';
+
+	//case 2: one space away from losing
+	board[x][y]='O';
+	if(checkForWinner()==-5000)
+	{
+		board[x][y] = '_';
+		return 4500;
+	}
+	else
+		board[x][y] = '_';
+
+	//case 3: block a move that can get them in a position of having 3 in a row with 2 empty spaces on sides
+	if(stats.oLeftAmount==1 && stats.oRightAmount==1 && x - 2 >= 0 && board[x-2][y]=='_' && x + 2 <= 7 && board[x+2][y]=='_')
+		return 4000;
+	if(stats.oUpAmount==1 && stats.oDownAmount==1 && y - 2 >= 0 && board[x][y-2]=='_' && y + 2 <= 7 && board[x][y+2]=='_')
+		return 4000;
+	if(stats.oRightAmount==2 && x + 3 <= 7 && board[x+3][y]=='_')
+		return 4000;
+	if(stats.oLeftAmount==2 && x - 3 >= 0 && board[x-3][y]=='_')
+		return 4000;
+	if(stats.oUpAmount==2 && y - 3 >= 0 && board[x][y-3]=='_')
+		return 4000;
+	if(stats.oDownAmount==2 && y + 3 <= 7 && board[x][y+3]=='_')
+		return 4000;
+
+	//case 4: a move that will create 3 in a row WITH SPACES on both sides
+	if(stats.xLeftAmount==1 && stats.xRightAmount == 1 && x - 2 >= 0 && board[x-2][y]=='_' && x + 2 <= 7 && board[x+2][y]=='_')
+		return 3500;
+	if(stats.xUpAmount==1 && stats.xDownAmount == 1 && y - 2 >= 0 && board[x][y-2]=='_' && y + 2 <= 7 && board[x][y+2]=='_')
+		return 3500;
+
+	//case 5: choose a move that moves toward creating the position we blocked the oponent from doing above
+
+	//this move is easy to detect and block. thats why i have case 5 come before because it is more hopeful
+	//case 6: a move that will create 3 in a row no spaces on both sides
+	if(stats.xLeftAmount + stats.xRightAmount == 2)
+		return 2500;
+	if(stats.xUpAmount + stats.xDownAmount == 2)
+		return 2500;
+
+	//case 7: a move that will create 2 in a row
+	if(stats.xLeftAmount + stats.xRightAmount == 1)
+		return 2000;
+	if(stats.xUpAmount + stats.xDownAmount == 1)
+		return 2000;
+
+	//if none of the above cases doesnt exist we want to pick a cell that is not near the edges and has spaces around it
+	//for now it'll just choose sequentially
+	return viability;
 }
 
 int evaluate(int x, int y)
@@ -451,13 +517,13 @@ int evaluate(int x, int y)
 
 	//less important than twoOpponentVal
 	int twoAIVal = 4000;
-	if (stats.xUpAmount == 3)viability += twoAIVal;
-	if (stats.xDownAmount == 3)viability += twoAIVal;
-	if (stats.xLeftAmount == 3)viability += twoAIVal;
-	if (stats.xRightAmount == 3)viability += twoAIVal;
+	if (stats.xUpAmount == 2)viability += twoAIVal;
+	if (stats.xDownAmount == 2)viability += twoAIVal;
+	if (stats.xLeftAmount == 2)viability += twoAIVal;
+	if (stats.xRightAmount == 2)viability += twoAIVal;
 
 	//VERY IMPORTANT! YOU CAN WIN!
-	int threeAIVal = 9001;
+	int threeAIVal = 1000003;
 	if (stats.xUpAmount == 3)viability += threeAIVal;
 	if (stats.xDownAmount == 3)viability += threeAIVal;
 	if (stats.xLeftAmount == 3)viability += threeAIVal;
@@ -534,23 +600,6 @@ moveStats getMoveStats(int x, int y) {
 	//cout << stats.upBreaker << stats.rightBreaker << stats.downBreaker << stats.leftBreaker <<endl;
 
 	return stats;
-}
-
-
-//returns the move to be made next. Starts searching board from the provided move.
-//This may be able to be integrated into MinMax for our benefit.
-string findNextMove(string move) {
-	int x = convertStringToMoveValueX(move);
-	int y = convertStringToMoveValueY(move);
-
-	for (int i = x; i < GRID_SIZE; i++) {
-		for (int j = y; j < GRID_SIZE; j++) {
-			if (board[x][y] == '_') {
-				return convertXYValuesToMoveString(x, y);
-			}
-		}
-	}
-	return "-1";
 }
 
 //converts the move string into an x-value for row index
