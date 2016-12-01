@@ -234,7 +234,7 @@ void getMoveHuman()
 	vector<xyPair>::iterator it;
 	int i = 0;
 	for (it = vect.begin(); it < vect.end(); it++, i++) {
-		cout << vect[i].x << " " << vect[i].y << endl;
+		cout << convertXYValuesToMoveString(vect[i].x, vect[i].y) << endl;
 	}
 
 	string move;
@@ -347,7 +347,7 @@ void makeMoveAI()
 	vector<xyPair>::iterator it;
 	int i = 0;
 	for (it = vect.begin(); it < vect.end(); it++, i++) {
-		cout << vect[i].x << " " << vect[i].y << endl;
+		cout << convertXYValuesToMoveString(vect[i].x, vect[i].y) << endl;
 	}
 
 	for (int depth = 1; depth < maxdepth; ++depth)
