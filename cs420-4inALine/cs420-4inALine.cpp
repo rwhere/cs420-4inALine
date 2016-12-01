@@ -614,7 +614,8 @@ vector<xyPair> prePrune() {
 	for (int i = 0; i < GRID_SIZE; i++) {
 		for (int j = 0; j < GRID_SIZE; j++) {
 			moveStats mS = getMoveStats(i, j);
-			if (mS.getCharAmount('X', mS.TOTAL) > 0) {
+			if (mS.getCharAmount('X', mS.TOTAL) > 0
+				|| mS.getCharAmount('O', mS.TOTAL) > 0) {
 				xyPair coordPair;
 				coordPair.x = i;
 				coordPair.y = j;
@@ -622,6 +623,13 @@ vector<xyPair> prePrune() {
 			}
 		}
 	}
+
+	vector<xyPair>::iterator it;
+	int i = 0;
+	for (it = vect.begin(); it < vect.end(); it++, i++) {
+		cout << vect[i].x << " " << vect[i].y << endl;
+	}
+
 	return vect;
 }
 
