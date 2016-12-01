@@ -27,6 +27,11 @@ struct moveStats {
 	char leftEmpties;
 	char rightEmpties;
 
+	char upBreaker;
+	char downBreaker;
+	char leftBreaker;
+	char rightBreaker;
+
 	enum direction{UP=0,DOWN=1, LEFT=2, RIGHT=3};
 
 	moveStats()
@@ -109,14 +114,14 @@ int main()
 	initializeBoard();
 	getMaxTime();
 	getWhoGoesFirst();
-	////create some phony data to make branching factor smaller
-	//for(int i = 0; i < GRID_SIZE-1; ++i)
-	//{
-	//	c = i%2==0 ? 'X' : 'O';
-	//	d = i%2==0 ? 'O' : 'X';
-	//	for(int j = 0; j < GRID_SIZE; ++j)
-	//		board[i][j] = j%2==0 ? c : d;
-	//}
+	//create some phony data to make branching factor smaller
+	for(int i = 0; i < GRID_SIZE-1; ++i)
+	{
+		c = i%2==0 ? 'X' : 'O';
+		d = i%2==0 ? 'O' : 'X';
+		for(int j = 0; j < GRID_SIZE; ++j)
+			board[i][j] = j%2==0 ? c : d;
+	}
 	printBoard();
 
 	//xOrO();
@@ -437,6 +442,8 @@ moveStats getMoveStats(int x, int y) {
 			stats.increment(repeatChar, stats.UP);
 			i++;
 		}
+		if (x - i >= 0)stats.upBreaker = board[x - i][y];
+		else stats.upBreaker = board[x - i + 1][y];
 	}
 	if (y + 1 < GRID_SIZE) {
 		i = 1;
@@ -447,6 +454,8 @@ moveStats getMoveStats(int x, int y) {
 			stats.increment(repeatChar, stats.RIGHT);
 			i++;
 		}
+		if (y + i < GRID_SIZE)stats.rightBreaker = board[x][y+i];
+		else stats.rightBreaker = board[x][y+i-1];
 	}
 	if (x + 1 < GRID_SIZE) {
 		i = 1;
@@ -457,17 +466,25 @@ moveStats getMoveStats(int x, int y) {
 			stats.increment(repeatChar, stats.DOWN);
 			i++;
 		}
+
+		if (x + i < GRID_SIZE)stats.downBreaker = board[x + i][y];
+		else stats.downBreaker = board[x + i - 1][y];
 	}
 	if (y - 1 > 0) {
 		i = 1;
 		repeatChar = board[x][y - 1];
 
 		//Checking left for repeats
-		while (board[x][y - i] == repeatChar && y - i > 0) {
+		while (board[x][y - i] == repeatChar && y - i >= 0) {
 			stats.increment(repeatChar, stats.LEFT);
 			i++;
 		}
+
+		if (y - i >= 0)stats.leftBreaker = board[x][y - i];
+		else stats.leftBreaker = board[x][y - i + 1];
 	}
+
+	//cout << stats.upBreaker << stats.rightBreaker << stats.downBreaker << stats.leftBreaker <<endl;
 
 	return stats;
 }
