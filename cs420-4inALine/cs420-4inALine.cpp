@@ -82,18 +82,19 @@ void printBoard();
 bool makeMoveHuman(string move);
 int checkForWinner();
 void getMoveHuman();
-moveStats getMoveStats(string move);
+moveStats getMoveStats(int x, int y);
 int convertStringToMoveValueX(string move);
 int convertStringToMoveValueY(string move);
 string convertXYValuesToMoveString(int x, int y);
-int min(int depth, clock_t startTime);
-int max(int depth, clock_t startTime);
+int min(int depth, clock_t startTime, int x, int y);
+int max(int depth, clock_t startTime, int x, int y);
 void checkGameOver();
 void makeMoveAI();
 void xOrO();
 void getMaxTime();
 void getWhoGoesFirst();
 void getAIFirstMove();
+int evaluate(int x, int y);
 
 char board[GRID_SIZE][GRID_SIZE];
 int maxdepth = 64, maxTime = -1;
@@ -223,67 +224,6 @@ void getMoveHuman()
 		cin>>move;
 	}
 }
-//currently, this gets the total amount of repeated o,x, or empties that are adjacent to the given move.
-//It will likely have to be modified once a proper evaluation function is discovered.
-//I'm not sure if it's important that we keep information on the direction of each repeat. If so, that can probably
-//be easily accomplished via an array in the struct.
-moveStats getMoveStats(string move) {
-	int i = 1;
-	int x = convertStringToMoveValueX(move);
-	int y = convertStringToMoveValueY(move);
-	char repeatChar;
-	moveStats stats;
-
-	if (x-1 > 0) {
-		repeatChar = board[x-i][y];
-
-		//Checking upward for repeats
-		while (board[x-i][y] == repeatChar && x - i >= 0) {
-			stats.increment(repeatChar, stats.UP);
-			i++;
-		}
-	}
-	if (y+1 < GRID_SIZE) {
-		i = 1;
-		repeatChar = board[x][y+1];
-
-		//Checking right for repeats
-		while (board[x][y+i] == repeatChar && y + i < GRID_SIZE) {
-			stats.increment(repeatChar, stats.RIGHT);
-			i++;
-		}
-	}
-	if (x + 1 < GRID_SIZE) {
-		i = 1;
-		repeatChar = board[x+1][y];
-
-		//Checking down for repeats
-		while (board[x+i][y] == repeatChar && x + i < GRID_SIZE) {
-			stats.increment(repeatChar, stats.DOWN);
-			i++;
-		}
-	}
-	if (y - 1 > 0) {
-		i = 1;
-		repeatChar = board[x][y-1];
-
-		//Checking left for repeats
-		while (board[x][y-i] == repeatChar && y-i > 0) {
-			stats.increment(repeatChar, stats.LEFT);
-			i++;
-		}
-	}
-
-	cout << "There are " << (int)stats.xUpAmount << " " << " adjacent repeat Xs to the top, " << (int)stats.xRightAmount << 
-		" adjacent repeat Xs to the right, and " << (int)stats.xDownAmount << " adjacent repeat Xs below at " << move << "." <<endl;
-
-	return stats;
-}
-
-int evaluate() 
-{
-	return 0;
-}
 
 //Have to modify the values that this returns for computer or human wins, according to our eval function.
 //Or model the returned eval function values based on this.
@@ -386,7 +326,7 @@ void makeMoveAI()
 				if(board[i][j] == '_')
 				{
 					board[i][j] = 'X';
-					score = min(depth - 1, startTime);
+					score = min(depth - 1, startTime, i,j);
 					if(score > best)
 					{
 						movei = i;
@@ -409,22 +349,22 @@ void makeMoveAI()
 	board[movei][movej] = 'X';
 }
 
-int min(int depth, clock_t startTime)
+int min(int depth, clock_t startTime, int x, int y)
 {
 	int best = 0x7FFFFFFF, score;
 	if(checkForWinner() != 0)
 		return checkForWinner();
 	if(depth==0)
-		return evaluate();
+		return evaluate(x,y);
 	if((float)(clock() - startTime)/CLOCKS_PER_SEC > maxTime)
-		return evaluate();
+		return evaluate(x,y);
 	for(int i = 0; i < GRID_SIZE; ++i)
 		for(int j = 0; j < GRID_SIZE; ++j)
 		{
 			if(board[i][j] == '_')
 			{
 				board[i][j] = 'O';
-				score = max(depth - 1, startTime);
+				score = max(depth - 1, startTime,i, j);
 				if(score < best)
 					best = score;
 				board[i][j] = '_';
@@ -434,22 +374,22 @@ int min(int depth, clock_t startTime)
 		}
 	return best;
 }
-int max(int depth, clock_t startTime)
+int max(int depth, clock_t startTime, int x, int y)
 {
 	int best = 0x80000000, score;
 	if(checkForWinner() != 0)
 		return checkForWinner();
 	if(depth==0)
-		return evaluate();
+		return evaluate(x,y);
 	if((float)(clock() - startTime)/CLOCKS_PER_SEC > maxTime)
-		return evaluate();
+		return evaluate(x,y);
 	for(int i = 0; i < GRID_SIZE; ++i)
 		for(int j = 0; j < GRID_SIZE; ++j)
 		{
 			if(board[i][j] == '_')
 			{
 				board[i][j] = 'X';
-				score = min(depth - 1, startTime);
+				score = min(depth - 1, startTime,i,j);
 				if(score > best)
 					best = score;
 				board[i][j] = '_';
@@ -459,6 +399,67 @@ int max(int depth, clock_t startTime)
 		}
 	return best;
 }
+
+
+int evaluate(int x, int y)
+{
+	moveStats stats = getMoveStats(x,y);
+	return 0;
+}
+
+//currently, this gets the total amount of repeated o,x, or empties that are adjacent to the given move.
+//It will likely have to be modified once a proper evaluation function is discovered.
+//I'm not sure if it's important that we keep information on the direction of each repeat. If so, that can probably
+//be easily accomplished via an array in the struct.
+moveStats getMoveStats(int x, int y) {
+	int i = 1;
+	char repeatChar;
+	moveStats stats;
+
+	if (x - 1 > 0) {
+		repeatChar = board[x - i][y];
+
+		//Checking upward for repeats
+		while (board[x - i][y] == repeatChar && x - i >= 0) {
+			stats.increment(repeatChar, stats.UP);
+			i++;
+		}
+	}
+	if (y + 1 < GRID_SIZE) {
+		i = 1;
+		repeatChar = board[x][y + 1];
+
+		//Checking right for repeats
+		while (board[x][y + i] == repeatChar && y + i < GRID_SIZE) {
+			stats.increment(repeatChar, stats.RIGHT);
+			i++;
+		}
+	}
+	if (x + 1 < GRID_SIZE) {
+		i = 1;
+		repeatChar = board[x + 1][y];
+
+		//Checking down for repeats
+		while (board[x + i][y] == repeatChar && x + i < GRID_SIZE) {
+			stats.increment(repeatChar, stats.DOWN);
+			i++;
+		}
+	}
+	if (y - 1 > 0) {
+		i = 1;
+		repeatChar = board[x][y - 1];
+
+		//Checking left for repeats
+		while (board[x][y - i] == repeatChar && y - i > 0) {
+			stats.increment(repeatChar, stats.LEFT);
+			i++;
+		}
+	}
+
+	return stats;
+}
+
+
 //returns the move to be made next. Starts searching board from the provided move.
 //This may be able to be integrated into MinMax for our benefit.
 string findNextMove(string move) {
