@@ -229,6 +229,13 @@ bool makeMoveHuman(string move)
 }
 void getMoveHuman()
 {
+	vector<xyPair> vect = prePrune();
+	vector<xyPair>::iterator it;
+	int i = 0;
+	for (it = vect.begin(); it < vect.end(); it++, i++) {
+		cout << vect[i].x << " " << vect[i].y << endl;
+	}
+
 	string move;
 	cout<<"Choose your next move: ";
 	cin>>move;
@@ -335,11 +342,17 @@ void makeMoveAI()
 	best = alpha;
 	int beta = 0x7FFFFFFF;
 
+	vector<xyPair> vect = prePrune();
+	vector<xyPair>::iterator it;
+	int i = 0;
+	for (it = vect.begin(); it < vect.end(); it++, i++) {
+		cout << vect[i].x << " " << vect[i].y << endl;
+	}
+
 	for (int depth = 1; depth < maxdepth; ++depth)
 	{
-		vector<xyPair> vect = prePrune();
-		vector<xyPair>::iterator it;
-		int i = 0;
+		vect = prePrune();
+		i = 0;
 		for (it = vect.begin(); it < vect.end(); it++, i++) {
 			int vectX = vect[i].x;
 			int vectY = vect[i].y;
