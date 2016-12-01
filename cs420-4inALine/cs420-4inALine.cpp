@@ -32,7 +32,7 @@ struct moveStats {
 	char leftBreaker;
 	char rightBreaker;
 
-	enum direction{UP=0,DOWN=1, LEFT=2, RIGHT=3};
+	enum direction{UP=0,DOWN=1, LEFT=2, RIGHT=3, TOTAL=4};
 
 	moveStats()
 	{
@@ -78,9 +78,14 @@ struct moveStats {
 		else if (charAmountToGet == '_' && direction == DOWN)return downEmpties;
 		else if (charAmountToGet == '_' && direction == LEFT)return leftEmpties;
 		else if (charAmountToGet == '_' && direction == RIGHT)return rightEmpties;
+		else if (charAmountToGet == 'X' && direction == TOTAL)return xUpAmount+xDownAmount+xLeftAmount+xRightAmount;
+		else if (charAmountToGet == 'O' && direction == TOTAL)return oUpAmount+oDownAmount+oLeftAmount+oRightAmount;
+		else if (charAmountToGet == '_' && direction == TOTAL)return upEmpties+downEmpties+rightEmpties+leftEmpties;
 		return -1; //something went wrong
 	}
 };
+
+struct xyPair { int x; int y; };
 
 void initializeBoard();
 void printBoard();
@@ -103,6 +108,7 @@ int evaluate(int x, int y);
 int Max(int, int);
 int Min(int, int);
 int eval(int x, int y);
+vector<xyPair> prePrune();
 
 char board[GRID_SIZE][GRID_SIZE];
 int maxdepth = 64, maxTime = -1;
@@ -600,6 +606,23 @@ moveStats getMoveStats(int x, int y) {
 	//cout << stats.upBreaker << stats.rightBreaker << stats.downBreaker << stats.leftBreaker <<endl;
 
 	return stats;
+}
+
+vector<xyPair> prePrune() {
+	vector<xyPair> vect;
+
+	for (int i = 0; i < GRID_SIZE; i++) {
+		for (int j = 0; j < GRID_SIZE; j++) {
+			moveStats mS = getMoveStats(i, j);
+			if (mS.getCharAmount('X', mS.TOTAL) > 0) {
+				xyPair coordPair;
+				coordPair.x = i;
+				coordPair.y = j;
+				vect.push_back(coordPair);
+			}
+		}
+	}
+	return vect;
 }
 
 //converts the move string into an x-value for row index
