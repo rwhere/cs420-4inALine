@@ -11,6 +11,52 @@
 
 using namespace std;
 
+struct moveStats;
+struct xyPair;
+char board[GRID_SIZE][GRID_SIZE];
+int maxdepth = 64, maxTime = -1;
+char maxChar = 'X'; //computer
+char minChar = 'O'; //human
+
+void initializeBoard();
+void printBoard();
+bool makeMoveHuman(string move);
+int checkForWinner();
+void getMoveHuman();
+moveStats getMoveStats(int x, int y);
+string convertXYValuesToMoveString(int x, int y);
+int min(int depth, clock_t startTime, int x, int y, int alpha, int beta);
+int max(int depth, clock_t startTime, int x, int y, int alpha, int beta);
+void checkGameOver();
+void makeMoveAI();
+void xOrO();
+void getMaxTime();
+void getWhoGoesFirst();
+void getAIFirstMove();
+int evaluate(int x, int y);
+int Max(int, int);
+int Min(int, int);
+int eval(int x, int y);
+vector<xyPair> prePrune();
+
+int main()
+{
+	initializeBoard();
+	getMaxTime();
+	getWhoGoesFirst();
+	printBoard();
+	while(true) 
+	{
+		getMoveHuman();
+		checkGameOver();
+		makeMoveAI();
+		checkGameOver();
+	}
+	return 0;
+}
+
+struct xyPair { int x; int y; };
+
 struct moveStats {
 	char xUpAmount;
 	char xDownAmount;
@@ -85,63 +131,6 @@ struct moveStats {
 	}
 };
 
-struct xyPair { int x; int y; };
-
-void initializeBoard();
-void printBoard();
-bool makeMoveHuman(string move);
-int checkForWinner();
-void getMoveHuman();
-moveStats getMoveStats(int x, int y);
-int convertStringToMoveValueX(string move);
-int convertStringToMoveValueY(string move);
-string convertXYValuesToMoveString(int x, int y);
-int min(int depth, clock_t startTime, int x, int y, int alpha, int beta);
-int max(int depth, clock_t startTime, int x, int y, int alpha, int beta);
-void checkGameOver();
-void makeMoveAI();
-void xOrO();
-void getMaxTime();
-void getWhoGoesFirst();
-void getAIFirstMove();
-int evaluate(int x, int y);
-int Max(int, int);
-int Min(int, int);
-int eval(int x, int y);
-vector<xyPair> prePrune();
-
-char board[GRID_SIZE][GRID_SIZE];
-int maxdepth = 64, maxTime = -1;
-char maxChar = 'X'; //computer
-char minChar = 'O'; //human
-int currentMax;
-int currentMin;
-
-int main()
-{
-	char c, d;
-	initializeBoard();
-	getMaxTime();
-	getWhoGoesFirst();
-	////create some phony data to make branching factor smaller
-	//for(int i = 0; i < GRID_SIZE-1; ++i)
-	//{
-	//	c = i%2==0 ? 'X' : 'O';
-	//	d = i%2==0 ? 'O' : 'X';
-	//	for(int j = 0; j < GRID_SIZE; ++j)
-	//		board[i][j] = j%2==0 ? c : d;
-	//}
-	printBoard();
-
-	//xOrO();
-	for (;;) {
-		getMoveHuman();
-		checkGameOver();
-		makeMoveAI();
-		checkGameOver();
-	}
-	return 0;
-}
 void getWhoGoesFirst()
 {
 	int response = -1;
@@ -184,18 +173,6 @@ void getMaxTime()
 		cin>>maxTime;
 	}
 }
-void xOrO(){
-	while (maxChar != 'X' && maxChar != 'O') {
-		cout << "Is the AI 'X' , or 'O'?";
-		cin >> maxChar;
-		if (maxChar != 'X' && maxChar != 'O') {
-			cout << "Please put a capital 'X' or 'O'.";
-		}
-	}
-	if (maxChar == 'X')minChar = 'O';
-	else minChar = 'X';
-}
-
 void initializeBoard()
 {
 	for(int i = 0; i < GRID_SIZE; ++i)
@@ -239,9 +216,6 @@ void getMoveHuman()
 		cin>>move;
 	}
 }
-
-//Have to modify the values that this returns for computer or human wins, according to our eval function.
-//Or model the returned eval function values based on this.
 int checkForWinner()
 {
 	int maxCounter = 0, minCounter = 0;
@@ -437,10 +411,6 @@ int Min(int x, int y)
 	return x < y ? x : y;
 }
 
-//notes: clustering is a strategy. must choose move close to opponent if you go 2nd
-//another strategy: really sticking to your opponent
-//bug: didnt choose the right move from eval list. chose a bad one instead. pre pruning?
-//bug in detail: theres a move with 4000 points is not chosen over move with 250*(x < 7) priority
 int eval(int x, int y)
 {
 	moveStats stats = getMoveStats(x,y);
@@ -466,7 +436,14 @@ int eval(int x, int y)
 	else
 		board[x][y] = '_';
 
-	//case 3: block a move that can get them in a position of having 3 in a row with 2 empty spaces on sides
+	//case 3: a move that will create 3 in a row WITH SPACES on both sides
+	if(stats.xLeftAmount==1 && stats.xRightAmount == 1 && y - 2 >= 0 && board[x][y-2]=='_' && y + 2 <= 7 && board[x][y+2]=='_')
+		return 3500;
+	if(stats.xUpAmount==1 && stats.xDownAmount == 1 && x - 2 >= 0 && board[x-2][y]=='_' && x + 2 <= 7 && board[x+2][y]=='_')
+		return 3500;
+
+
+	//case 4: block a move that can get them in a position of having 3 in a row with 2 empty spaces on sides
 	if (stats.oLeftAmount == 1 && stats.oRightAmount == 1 && y - 2 >= 0 && stats.leftBreaker == '_' && y + 2 <= 7 && stats.rightBreaker == '_')
 		return 4000;
 	if(stats.oUpAmount==1 && stats.oDownAmount==1 && x - 2 >= 0 && stats.upBreaker == '_' && x + 2 <= 7 && stats.downBreaker=='_')
@@ -480,17 +457,7 @@ int eval(int x, int y)
 	if(stats.oDownAmount==2 && x + 3 <= 7 && board[x+3][y]=='_')
 		return 4000;
 
-	//case 4: a move that will create 3 in a row WITH SPACES on both sides
-	if(stats.xLeftAmount==1 && stats.xRightAmount == 1 && y - 2 >= 0 && board[x][y-2]=='_' && y + 2 <= 7 && board[x][y+2]=='_')
-		return 3500;
-	if(stats.xUpAmount==1 && stats.xDownAmount == 1 && x - 2 >= 0 && board[x-2][y]=='_' && x + 2 <= 7 && board[x+2][y]=='_')
-		return 3500;
-
-	//case 5: choose a move that moves toward creating the position we blocked the oponent from doing above
-	
-
-	//this move is easy to detect and block. thats why i have case 5 come before because it is more hopeful
-	//case 6: a move that will create 3 in a row no spaces on both sides with guarantee 4 in a row is possible via this move
+	//case 5: a move that will create 3 in a row no spaces on both sides with guarantee 4 in a row is possible via this move
 	if(stats.xLeftAmount + stats.xRightAmount == 2 && ((y - stats.xLeftAmount - 1 >= 0 && board[x][y - stats.xLeftAmount-1]=='_') || 
 													(y + stats.xRightAmount + 1 <= 7 && board[x][y+stats.xRightAmount+1]=='_')))
 		return 2500;
@@ -498,12 +465,7 @@ int eval(int x, int y)
 													(x + stats.xDownAmount +1 <= 7 && board[x+stats.xDownAmount+1][y]=='_')))
 		return 2500;
 
-	//maybe this should only be used when we go 2nd
-	/*a move that will closely stay on its opponent. if it has a neighbor stick to them
-	if(stats.oUpAmount>=1 || stats.oDownAmount>=1 || stats.oRightAmount>=1 || stats.oLeftAmount>=1)
-		return 2000;*/
-
-	//case 8: a move that will create 2 in a row
+	//case 6: a move that will create 2 in a row
 	if(stats.xLeftAmount + stats.xRightAmount == 1)
 		return 200;
 	if(stats.xUpAmount + stats.xDownAmount == 1)
@@ -512,68 +474,6 @@ int eval(int x, int y)
 	return viability;
 }
 
-int evaluate(int x, int y)
-{
-	moveStats stats = getMoveStats(x,y);
-	int viability = 0;
-
-	int oneOpponentVal = 200;
-	if (stats.oUpAmount == 1)viability += oneOpponentVal;
-	if (stats.oDownAmount == 1)viability += oneOpponentVal;
-	if (stats.oLeftAmount == 1)viability += oneOpponentVal;
-	if (stats.oRightAmount == 1)viability += oneOpponentVal;
-
-	int twoOpponentVal = 1000;
-	if (stats.oUpAmount == 2)viability += twoOpponentVal;
-	if (stats.oDownAmount == 2)viability += twoOpponentVal;
-	if(stats.oLeftAmount == 2)viability += twoOpponentVal;
-	if(stats.oRightAmount == 2)viability += twoOpponentVal;
-
-	int twoOpponentEmptyBreakersVal = 5250;
-	if (stats.oUpAmount == 2 && stats.upBreaker == '_')viability += twoOpponentEmptyBreakersVal;
-	if (stats.oDownAmount == 2 && stats.downBreaker == '_')viability += twoOpponentEmptyBreakersVal;
-	if (stats.oLeftAmount == 2 && stats.leftBreaker == '_')viability += twoOpponentEmptyBreakersVal;
-	if (stats.oRightAmount == 2 && stats.rightBreaker == '_')viability += twoOpponentEmptyBreakersVal;
-
-	int threeOpponentVal = 6000;
-	if (stats.oUpAmount == 3)viability += threeOpponentVal;
-	if (stats.oDownAmount == 3)viability += threeOpponentVal;
-	if (stats.oLeftAmount == 3)viability += threeOpponentVal;
-	if (stats.oRightAmount == 3)viability += threeOpponentVal;
-
-	int oneAIVal = 250;
-	if (stats.xUpAmount == 1)viability += oneAIVal;
-	if (stats.xDownAmount == 1)viability += oneAIVal;
-	if (stats.xLeftAmount == 1)viability += oneAIVal;
-	if (stats.xRightAmount == 1)viability += oneAIVal;
-
-	//less important than twoOpponentVal
-	int twoAIVal = 4000;
-	if (stats.xUpAmount == 2)viability += twoAIVal;
-	if (stats.xDownAmount == 2)viability += twoAIVal;
-	if (stats.xLeftAmount == 2)viability += twoAIVal;
-	if (stats.xRightAmount == 2)viability += twoAIVal;
-
-	//VERY IMPORTANT! YOU CAN WIN!
-	int threeAIVal = 1000003;
-	if (stats.xUpAmount == 3)viability += threeAIVal;
-	if (stats.xDownAmount == 3)viability += threeAIVal;
-	if (stats.xLeftAmount == 3)viability += threeAIVal;
-	if (stats.xRightAmount == 3)viability += threeAIVal;
-
-	//Keep away from sides that will give you no possible space to win.
-	if (stats.xUpAmount + stats.downEmpties + 1 >= 4)viability += 100;
-	if (stats.xDownAmount + stats.upEmpties + 1 >= 4)viability += 100;
-	if (stats.xLeftAmount + stats.rightEmpties + 1 >= 4)viability += 100;
-	if (stats.xRightAmount + stats.leftEmpties + 1 >= 4)viability += 100;
-	
-	return viability;
-}
-
-//currently, this gets the total amount of repeated o,x, or empties that are adjacent to the given move.
-//It will likely have to be modified once a proper evaluation function is discovered.
-//I'm not sure if it's important that we keep information on the direction of each repeat. If so, that can probably
-//be easily accomplished via an array in the struct.
 moveStats getMoveStats(int x, int y) {
 	int i = 1;
 	char repeatChar;
@@ -628,9 +528,6 @@ moveStats getMoveStats(int x, int y) {
 		if (y - i >= 0)stats.leftBreaker = board[x][y - i];
 		else stats.leftBreaker = board[x][y - i + 1];
 	}
-
-	//cout << stats.upBreaker << stats.rightBreaker << stats.downBreaker << stats.leftBreaker <<endl;
-
 	return stats;
 }
 
@@ -652,17 +549,6 @@ vector<xyPair> prePrune() {
 
 	return vect;
 }
-
-//converts the move string into an x-value for row index
-int convertStringToMoveValueX(string move) {
-	return toupper(move[0]) - 65;
-}
-
-//converts the move string into a y-value for column index
-int convertStringToMoveValueY(string move) {
-	return move[1] - '0' - 1;
-}
-
 
 //convert two coordinates into a move string. Returns a capital string like A6, instead of a6.
 string convertXYValuesToMoveString(int x, int y) {
